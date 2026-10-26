@@ -4,7 +4,7 @@ Static analysis cannot prove that a contract is secure. SorobanShield helps poin
 
 ## What a clean scan means
 
-Only that the implemented checks, under the conditions of that scan, reported nothing. Today there are **three** implemented rules ([SS-001](/rules/SS-001), [SS-002](/rules/SS-002) and [SS-006](/rules/SS-006), the last being informational diagnostics about project metadata). Authorization bugs outside SS-001's pattern, arithmetic problems outside SS-002's pattern (it only tracks integer function parameters), cross-contract problems, logic errors and economic attacks are all out of scope.
+Only that the implemented checks, under the conditions of that scan, reported nothing. Today there are **six** implemented rules ([SS-001](/rules/SS-001) to [SS-006](/rules/SS-006)). Three of them (SS-004, SS-005, SS-006) are informational prompts about error design, tests and project metadata rather than security-defect detectors. Authorization bugs outside SS-001's pattern, arithmetic problems outside SS-002's pattern (it only tracks integer function parameters), cross-contract problems, logic errors and economic attacks are all out of scope.
 
 ## False positives
 

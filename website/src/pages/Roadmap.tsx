@@ -12,7 +12,7 @@ const items: { title: string; state: State; note: string }[] = [
   { title: 'Configuration file', state: 'done', note: 'sorobanshield.toml: path-prefix exclusions, rule disabling and fail_on, strictly validated.' },
   { title: 'Baseline support', state: 'done', note: 'Record findings once and fail only on new ones; entries ignore line numbers; suppression is reported.' },
   { title: 'SARIF output', state: 'done', note: 'SARIF 2.1.0 via --format sarif; sample outputs were validated against the official schema by hand, not in CI.' },
-  { title: 'Additional rules SS-003 to SS-005', state: 'planned', note: 'Each will ship only with fixtures, tests and documented limitations.' },
+  { title: 'Rules SS-003, SS-004 and SS-005', state: 'done', note: 'External call review, error-path review and test suggestions, each with positive, negative and edge fixtures and documented limitations.' },
   { title: 'First tagged release', state: 'planned', note: 'No release has been published. Build from source.' },
   { title: 'Independent security review', state: 'planned', note: 'Not performed.' },
 ]

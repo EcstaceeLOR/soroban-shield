@@ -7,7 +7,7 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Analysis is per file and syntactic. Macros are not expanded, types are not resolved, and there is no control-flow or cross-file analysis.
 - Only Rust source and `Cargo.toml` are examined, not compiled WASM.
 - A clean scan means only that the implemented checks reported nothing.
-- Three rules (SS-001, SS-002, SS-006) are implemented. SS-003 to SS-005 are planned and do not run.
+- Six rules (SS-001 to SS-006) are implemented. SS-004, SS-005 and SS-006 are informational prompts about error design, tests and project metadata, not security-defect detectors.
 
 ## SS-001 false positives
 
@@ -35,6 +35,22 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Operations in private helpers, other files or macros.
 - Type aliases, and `i8`/`i16`/`u8`/`u16`/`usize`/`isize` parameters.
 - Division, remainder, shifts, casts of non-parameter expressions, and fixed-point rounding issues.
+
+## SS-003 false positives
+
+- Routers and proxies that intentionally call a caller-chosen contract; addresses validated earlier in the function (validation is not evaluated); best-effort calls whose failure is acceptable.
+
+## SS-003 false negatives
+
+- Targets reached through locals, struct fields, storage reads or helpers (only direct `Address` parameters and same-function client bindings are tracked); `try_*` calls on clients obtained other than by `...Client::new(..)` in the same function; calls in private helpers, other files or macros; ordering of state writes relative to external calls.
+
+## SS-004 false positives and negatives
+
+- `unwrap`/`expect` on values guaranteed present by construction are reported. Panics in private helpers, other files or macro arguments, `unreachable!`, indexing and division by zero are not reported. A failed Soroban invocation reverts its state changes, so this rule is about error design and diagnosability, not partial state.
+
+## SS-005 false positives and negatives
+
+- Matching is by function name. Tests in other crates are not seen (false positive); any identifier with the same name in test code counts as coverage even if the transition is not meaningfully tested (false negative); sequences of transitions are never inspected.
 
 ## SS-006 false positives
 

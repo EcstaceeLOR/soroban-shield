@@ -26,3 +26,6 @@ mod test {
         }
     }
 }
+
+#[cfg(test)]
+mod burn_test;

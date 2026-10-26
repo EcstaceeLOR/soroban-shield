@@ -1,4 +1,4 @@
-SorobanShield 0.1.0 - scanned 1 file(s) with 3 rule(s)
+SorobanShield 0.1.0 - scanned 2 file(s) with 6 rule(s)
 
 [1] SS-001 Authorization path review (severity: medium, confidence: low)
     at src/lib.rs:10

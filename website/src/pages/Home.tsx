@@ -98,7 +98,11 @@ export default function Home() {
             ))}
           </ul>
           <p className="mt-4 text-sm text-slate-400">
-            {plannedCount} further rule{plannedCount === 1 ? ' is' : 's are'} planned and not run by the scanner.{' '}
+            {plannedCount > 0 && (
+              <>
+                {plannedCount} further rule{plannedCount === 1 ? ' is' : 's are'} planned and not run by the scanner.{' '}
+              </>
+            )}
             <Link className="text-accent underline" to="/rules">Browse the full catalog</Link>.
           </p>
         </section>

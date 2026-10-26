@@ -17,7 +17,7 @@ Rules live in the `sorobanshield-rules` crate. Each rule implements the `Rule` t
 # 1. Add fixtures under tests/fixtures/{positive,negative,edge}/<name>/
 #    (each is a tiny project with a Cargo.toml declaring soroban-sdk)
 # 2. Implement the rule in crates/sorobanshield-rules/src/
-# 3. Register it in active_rules() and remove it from planned.rs
+# 3. Register it in active_rules() in crates/sorobanshield-rules/src/lib.rs
 cargo test --workspace
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -32,7 +32,7 @@ cd website
 npm run gen:rules
 ```
 
-A rule appears as **implemented** only after it is registered and tested. Planned rules are catalog entries with no severity or confidence.
+A rule appears in the catalog as **implemented** only after it is registered and tested. The website supports a `planned` status for future rules, which would be shown without severity or confidence and never run by the scanner.
 
 ## Severity and confidence
 

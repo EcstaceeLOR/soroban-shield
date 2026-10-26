@@ -1,6 +1,6 @@
 use crate::finding::Finding;
 use crate::project::{Project, ProjectError};
-use crate::rule::{relative_display, ManifestUnit, Rule, SourceUnit};
+use crate::rule::{relative_display, ManifestUnit, ProjectUnit, Rule, SourceUnit};
 use serde::Serialize;
 use std::path::Path;
 
@@ -20,21 +20,27 @@ pub struct ScanOutcome {
 
 pub fn scan_project(project: &Project, rules: &[Box<dyn Rule>]) -> ScanOutcome {
     let mut out = ScanOutcome::default();
+    let mut parsed: Vec<(String, syn::File)> = Vec::new();
     for path in &project.sources {
         let rel = relative_display(&project.root, path);
         match parse(path) {
-            Ok(ast) => {
-                out.files_scanned += 1;
-                let unit = SourceUnit {
-                    path: &rel,
-                    ast: &ast,
-                };
-                for rule in rules {
-                    out.findings.extend(rule.check(&unit));
-                }
-            }
+            Ok(ast) => parsed.push((rel, ast)),
             Err(message) => out.errors.push(ScanError { file: rel, message }),
         }
+    }
+    out.files_scanned = parsed.len();
+    let units: Vec<SourceUnit<'_>> = parsed
+        .iter()
+        .map(|(path, ast)| SourceUnit { path, ast })
+        .collect();
+    for unit in &units {
+        for rule in rules {
+            out.findings.extend(rule.check(unit));
+        }
+    }
+    let project_unit = ProjectUnit { files: &units };
+    for rule in rules {
+        out.findings.extend(rule.check_project(&project_unit));
     }
     for m in &project.manifests {
         let unit = ManifestUnit {

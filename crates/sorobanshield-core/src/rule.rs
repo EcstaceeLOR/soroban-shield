@@ -48,10 +48,19 @@ pub struct ManifestUnit<'a> {
     pub project_root: &'a Path,
 }
 
+/// All parsed source files of the project, for rules that need cross-file context.
+pub struct ProjectUnit<'a> {
+    pub files: &'a [SourceUnit<'a>],
+}
+
 pub trait Rule: Sync {
     fn meta(&self) -> RuleMeta;
     /// Inspect a parsed Rust source file. Defaults to no findings.
     fn check(&self, _unit: &SourceUnit<'_>) -> Vec<Finding> {
+        Vec::new()
+    }
+    /// Inspect every parsed source file together. Defaults to no findings.
+    fn check_project(&self, _unit: &ProjectUnit<'_>) -> Vec<Finding> {
         Vec::new()
     }
     /// Inspect a parsed Cargo.toml. Defaults to no findings.

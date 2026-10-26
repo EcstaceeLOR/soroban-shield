@@ -66,53 +66,89 @@
   {
     "id": "SS-003",
     "name": "External contract call review",
-    "status": "planned",
-    "severity": null,
-    "confidence": null,
-    "concern": "Cross-contract and token calls have authorization and state-ordering implications.",
-    "detection": "Planned: locate selected external calls and prompt review where result handling is unclear.",
-    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
-    "remediation": "Not applicable until the rule is implemented.",
-    "false_positives": [],
-    "false_negatives": [],
+    "status": "implemented",
+    "severity": "low",
+    "confidence": "low",
+    "concern": "A public contract function either calls a contract whose address is taken directly from a caller-supplied Address argument, or discards the Result of a fallible external call. A call by itself is not a vulnerability; these two shapes are where the callee's identity or a failure is easy to overlook.",
+    "detection": "Parses each file with syn. In public functions of #[contractimpl] impl blocks it reports (a) invoke_contract / try_invoke_contract whose first argument is a function parameter of type Address, and `<Name>Client::new(env, addr)` / `module::Client::new(env, addr)` constructed from such a parameter; and (b) `try_*` calls made on a value known to be a contract client (bound from `...Client::new(..)` in the same function) or `try_invoke_contract`, when the Result is discarded with `let _ =` or used as an expression statement. #[cfg(test)] items are skipped.",
+    "severity_rationale": "Low severity and low confidence: calling a caller-chosen contract can be intended (routers, aggregators), and Soroban's host rejects re-entrancy and reverts all state when an invocation fails, so the typical consequence is a surprising call target or an ignored failure rather than a classic drain. The rule cannot see whether the address is validated against an allow-list or whether ignoring the failure is deliberate.",
+    "remediation": "If the target must be trusted, compare the address against a stored allow-list or configured address before calling it, and require_auth the actor who selects it. Handle the Result of try_* calls explicitly (propagate with `?`, map to a contract error, or document why ignoring it is safe). Add tests with a malicious or failing callee.",
+    "false_positives": [
+      "Routers and generic proxies that intentionally call a caller-chosen contract.",
+      "The address was validated earlier in the function; validation is not evaluated.",
+      "Intentionally best-effort calls whose failure is acceptable."
+    ],
+    "false_negatives": [
+      "Targets reached through locals, struct fields, storage reads or helper functions: only direct Address parameters are tracked.",
+      "try_* calls on clients obtained other than by `...Client::new(..)` in the same function, and discarded results via helper wrappers.",
+      "External calls in private helpers, other files or macros, and calls whose Result is handled incorrectly rather than discarded.",
+      "State written before or after an external call; ordering is not analysed."
+    ],
     "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts/example-contracts/cross-contract-call",
       "https://developers.stellar.org/docs/build/smart-contracts"
     ],
-    "fixtures": []
+    "fixtures": [
+      "tests/fixtures/positive/external_calls",
+      "tests/fixtures/negative/safe_external_calls"
+    ]
   },
   {
     "id": "SS-004",
     "name": "Error-path review",
-    "status": "planned",
-    "severity": null,
-    "confidence": null,
-    "concern": "Inconsistent error handling can leave unexpected state changes in place.",
-    "detection": "Planned: a narrowly defined set of suspicious error-handling patterns.",
-    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
-    "remediation": "Not applicable until the rule is implemented.",
-    "false_positives": [],
-    "false_negatives": [],
-    "references": [
-      "https://developers.stellar.org/docs/build/smart-contracts"
+    "status": "implemented",
+    "severity": "info",
+    "confidence": "low",
+    "concern": "Public contract functions that fail through .unwrap(), .expect(..), panic!, todo! or unimplemented! abort with an opaque trap instead of a typed contract error. Callers and tests cannot distinguish failure causes, and some panics may be reachable by attacker-chosen input.",
+    "detection": "Parses each file with syn. In public functions of #[contractimpl] impl blocks it counts calls to .unwrap() with no arguments, .expect(..) with one argument, and the panic!, todo! and unimplemented! macros. Arguments inside other macros are not parsed and are not inspected. unreachable!, assert! and panic_with_error! are not reported. #[cfg(test)] items are skipped.",
+    "severity_rationale": "Informational: in Soroban a failed invocation reverts its state changes, so a panic does not leave partial state behind; the concern is diagnosability, deliberate error design and unintended reachable traps. Low confidence because an unwrap on an invariant that cannot fail is fine.",
+    "remediation": "Return `Result<_, Error>` with a #[contracterror] enum, or use panic_with_error!(&env, Error::X), so each failure has a stable code. Keep unwrap only for invariants that genuinely cannot fail, and test the failure paths.",
+    "false_positives": [
+      "unwrap/expect on values that are guaranteed to be present by construction or earlier validation.",
+      "Contracts that deliberately trap on invalid state."
     ],
-    "fixtures": []
+    "false_negatives": [
+      "Panics inside private helpers, other files or macro arguments.",
+      "Other trapping operations such as indexing, division by zero, or unwrap_or_else with a panicking closure.",
+      "Whether error handling is consistent across the contract is not assessed."
+    ],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts/example-contracts/errors",
+      "https://doc.rust-lang.org/book/ch09-00-error-handling.html"
+    ],
+    "fixtures": [
+      "tests/fixtures/positive/panicking_entrypoints",
+      "tests/fixtures/negative/typed_errors"
+    ]
   },
   {
     "id": "SS-005",
     "name": "State-transition test suggestions",
-    "status": "planned",
-    "severity": null,
-    "confidence": null,
-    "concern": "Individually correct functions can combine into incorrect state transitions.",
-    "detection": "Planned: test suggestions for selected stateful patterns, clearly marked as suggestions.",
-    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
-    "remediation": "Not applicable until the rule is implemented.",
-    "false_positives": [],
-    "false_negatives": [],
-    "references": [
-      "https://developers.stellar.org/docs/build/smart-contracts"
+    "status": "implemented",
+    "severity": "info",
+    "confidence": "low",
+    "concern": "A public contract function that writes storage is a state transition. If no test in the project appears to call it, regressions in its authorization, arithmetic and sequencing with other transitions go unnoticed.",
+    "detection": "Project-wide. Collects public #[contractimpl] functions that write storage (.set / .remove on a .storage() chain), then collects identifiers from test code: #[cfg(test)] modules and #[test] functions, plus whole files that contain #[test] functions but define no contract. It reports each state-changing entrypoint whose name appears in no test code; if the project has no test code at all, it reports one finding listing the entrypoints. Matching is by name, including inside macro arguments such as assert_eq!.",
+    "severity_rationale": "Informational: missing tests are a prompt to write tests, not a defect in the contract. Low confidence because matching is by name only, tests in other crates or generated clients under different names are not seen, and a name match does not mean the transition is meaningfully tested.",
+    "remediation": "Add tests that call the entrypoint as an authorized and an unauthorized caller, exercise boundary values, and cover sequences of transitions that depend on one another (for example initialize, update, then update again).",
+    "false_positives": [
+      "Tests live in another crate or repository, or call the contract through a differently named wrapper.",
+      "Entrypoints exercised only through a generic helper that receives the function name as a string."
     ],
-    "fixtures": []
+    "false_negatives": [
+      "A name appears in test code without the transition being meaningfully tested, for example a call whose result is never checked.",
+      "Name collisions: another identifier with the same name in test code counts as coverage.",
+      "Sequences of transitions are never inspected; only individual entrypoints are considered."
+    ],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts/getting-started/storing-data",
+      "https://doc.rust-lang.org/book/ch11-01-writing-tests.html"
+    ],
+    "fixtures": [
+      "tests/fixtures/positive/untested_entrypoints",
+      "tests/fixtures/negative/tested_entrypoints",
+      "tests/fixtures/edge/partially_tested"
+    ]
   },
   {
     "id": "SS-006",

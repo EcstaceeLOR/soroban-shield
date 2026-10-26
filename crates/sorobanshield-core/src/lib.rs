@@ -12,5 +12,5 @@ pub use engine::{discover_and_scan, scan_project, ScanError, ScanOutcome};
 pub use finding::{Confidence, Finding, Severity};
 pub use project::{Project, ProjectError};
 pub use report::Report;
-pub use rule::{ManifestUnit, Rule, RuleMeta, RuleStatus, SourceUnit};
+pub use rule::{ManifestUnit, ProjectUnit, Rule, RuleMeta, RuleStatus, SourceUnit};
 pub use toml;

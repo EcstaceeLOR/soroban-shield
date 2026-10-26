@@ -1,11 +1,10 @@
+use crate::common::contract_entrypoints;
 use proc_macro2::Span;
 use sorobanshield_core::{Confidence, Finding, Rule, RuleMeta, RuleStatus, Severity, SourceUnit};
 use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
-use syn::{
-    BinOp, Expr, ExprBinary, ExprCast, FnArg, ImplItem, Item, ItemImpl, Pat, Type, Visibility,
-};
+use syn::{BinOp, Expr, ExprBinary, ExprCast, FnArg, Pat, Type};
 
 pub const ID: &str = "SS-002";
 
@@ -86,44 +85,6 @@ impl<'ast> Visit<'ast> for Hits<'_> {
     }
 }
 
-fn is_cfg_test(attrs: &[syn::Attribute]) -> bool {
-    attrs.iter().any(|a| match &a.meta {
-        syn::Meta::List(l) => {
-            a.path().is_ident("cfg")
-                && l.tokens
-                    .to_string()
-                    .split(|c: char| !c.is_alphanumeric() && c != '_')
-                    .any(|t| t == "test")
-        }
-        _ => false,
-    })
-}
-
-fn collect<'a>(items: &'a [Item], out: &mut Vec<&'a syn::ImplItemFn>) {
-    for item in items {
-        match item {
-            Item::Impl(ItemImpl { attrs, items, .. })
-                if !is_cfg_test(attrs)
-                    && attrs.iter().any(|a| a.path().is_ident("contractimpl")) =>
-            {
-                for it in items {
-                    if let ImplItem::Fn(f) = it {
-                        if matches!(f.vis, Visibility::Public(_)) {
-                            out.push(f);
-                        }
-                    }
-                }
-            }
-            Item::Mod(m) if !is_cfg_test(&m.attrs) => {
-                if let Some((_, inner)) = &m.content {
-                    collect(inner, out);
-                }
-            }
-            _ => {}
-        }
-    }
-}
-
 impl Rule for ArithmeticBoundaryReview {
     fn meta(&self) -> RuleMeta {
         RuleMeta {
@@ -162,8 +123,7 @@ impl Rule for ArithmeticBoundaryReview {
 
     fn check(&self, unit: &SourceUnit<'_>) -> Vec<Finding> {
         let meta = self.meta();
-        let mut fns = Vec::new();
-        collect(&unit.ast.items, &mut fns);
+        let fns = contract_entrypoints(&unit.ast.items);
 
         let mut out = Vec::new();
         for f in fns {

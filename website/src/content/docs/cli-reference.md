@@ -39,14 +39,14 @@ sorobanshield scan . --fail-on high
 
 ## `sorobanshield rules list [--format text|json]`
 
-Lists every rule in the catalog, including planned rules. Planned rules are metadata only and are never run by `scan`.
+Lists every rule in the catalog with its status. Only rules marked `implemented` run during a scan; all current rules are implemented.
 
 ```text
 SS-001  [implemented] Authorization path review
 SS-002  [implemented] Arithmetic boundary review
-SS-003  [planned]     External contract call review
-SS-004  [planned]     Error-path review
-SS-005  [planned]     State-transition test suggestions
+SS-003  [implemented] External contract call review
+SS-004  [implemented] Error-path review
+SS-005  [implemented] State-transition test suggestions
 SS-006  [implemented] Dependency and toolchain diagnostics
 ```
 

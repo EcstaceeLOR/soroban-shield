@@ -1,6 +1,9 @@
-pub mod planned;
+pub mod common;
 pub mod ss001;
 pub mod ss002;
+pub mod ss003;
+pub mod ss004;
+pub mod ss005;
 pub mod ss006;
 
 use sorobanshield_core::{Rule, RuleMeta};
@@ -10,15 +13,16 @@ pub fn active_rules() -> Vec<Box<dyn Rule>> {
     vec![
         Box::new(ss001::AuthorizationPathReview),
         Box::new(ss002::ArithmeticBoundaryReview),
+        Box::new(ss003::ExternalCallReview),
+        Box::new(ss004::ErrorPathReview),
+        Box::new(ss005::StateTransitionTestSuggestions),
         Box::new(ss006::ToolchainDiagnostics),
     ]
 }
 
-/// Metadata for every known rule: implemented ones first, then planned ones.
-/// Planned rules are catalog entries only and are never executed.
+/// Metadata for every implemented rule, ordered by ID.
 pub fn catalog() -> Vec<RuleMeta> {
     let mut all: Vec<RuleMeta> = active_rules().iter().map(|r| r.meta()).collect();
-    all.extend(planned::planned_rules());
     all.sort_by(|a, b| a.id.cmp(&b.id));
     all
 }
@@ -35,7 +39,7 @@ mod tests {
     use sorobanshield_core::RuleStatus;
 
     #[test]
-    fn only_implemented_rules_are_active() {
+    fn catalog_lists_exactly_the_active_rules() {
         let active: Vec<String> = active_rules().iter().map(|r| r.meta().id).collect();
         let implemented: Vec<String> = catalog()
             .into_iter()
@@ -58,19 +62,5 @@ mod tests {
     fn lookup_is_case_insensitive() {
         assert!(find_rule("ss-001").is_some());
         assert!(find_rule("SS-999").is_none());
-    }
-
-    #[test]
-    fn planned_rules_make_no_severity_claim() {
-        for m in catalog()
-            .into_iter()
-            .filter(|m| m.status == RuleStatus::Planned)
-        {
-            assert!(
-                m.severity.is_none() && m.confidence.is_none(),
-                "{} must not claim severity",
-                m.id
-            );
-        }
     }
 }

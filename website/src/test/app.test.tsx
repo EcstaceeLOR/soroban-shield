@@ -63,78 +63,61 @@ describe('routes', () => {
 })
 
 describe('rule catalog data', () => {
-  it('is generated from the CLI and marks only SS-001, SS-002 and SS-006 as implemented', () => {
-    const implemented = rules.filter((r) => r.status === 'implemented').map((r) => r.id)
-    expect(implemented).toEqual(['SS-001', 'SS-002', 'SS-006'])
-    for (const r of rules.filter((r) => r.status === 'planned')) {
-      expect(r.severity).toBeNull()
-      expect(r.confidence).toBeNull()
+  it('is generated from the CLI and lists every shipped rule as implemented', () => {
+    expect(rules.map((r) => [r.id, r.status])).toEqual([
+      ['SS-001', 'implemented'],
+      ['SS-002', 'implemented'],
+      ['SS-003', 'implemented'],
+      ['SS-004', 'implemented'],
+      ['SS-005', 'implemented'],
+      ['SS-006', 'implemented'],
+    ])
+  })
+
+  it.each([
+    ['SS-001', 'Authorization path review', 'severity: medium', 'confidence: low'],
+    ['SS-002', 'Arithmetic boundary review', 'severity: low', 'confidence: low'],
+    ['SS-003', 'External contract call review', 'severity: low', 'confidence: low'],
+    ['SS-004', 'Error-path review', 'severity: info', 'confidence: low'],
+    ['SS-005', 'State-transition test suggestions', 'severity: info', 'confidence: low'],
+    ['SS-006', 'Dependency and toolchain diagnostics', 'severity: info', 'confidence: high'],
+  ])('%s detail page shows %s with its severity, confidence and limitations', (id, name, sev, conf) => {
+    renderAt(`/rules/${id}`)
+    expect(screen.getByRole('heading', { level: 1, name })).toBeInTheDocument()
+    expect(screen.getByText(sev)).toBeInTheDocument()
+    expect(screen.getByText(conf)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Known false positives' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Known false negatives' })).toBeInTheDocument()
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
+  it('lists every rule as implemented on the catalog page', () => {
+    renderAt('/rules')
+    for (const r of rules) {
+      expect(within(screen.getByTestId(`rule-${r.id}`)).getByTestId('status-badge')).toHaveTextContent('implemented')
     }
+    expect(screen.queryByText(/not run by the scanner/i)).not.toBeInTheDocument()
   })
 
-  it('lists SS-001 as implemented and SS-003 as planned without severity', () => {
-    renderAt('/rules')
-    const ss1 = within(screen.getByTestId('rule-SS-001'))
-    expect(ss1.getByTestId('status-badge')).toHaveTextContent('implemented')
-    expect(ss1.getByText('severity: medium')).toBeInTheDocument()
-    const ss2 = within(screen.getByTestId('rule-SS-003'))
-    expect(ss2.getByTestId('status-badge')).toHaveTextContent('planned')
-    expect(ss2.queryByText(/severity:/)).not.toBeInTheDocument()
-    expect(ss2.getByText(/not run by the scanner/i)).toBeInTheDocument()
-  })
-
-  it('shows SS-002 as implemented with low severity and low confidence', () => {
-    renderAt('/rules')
-    const ss2 = within(screen.getByTestId('rule-SS-002'))
-    expect(ss2.getByTestId('status-badge')).toHaveTextContent('implemented')
-    expect(ss2.getByText('severity: low')).toBeInTheDocument()
-  })
-
-  it('shows SS-006 as implemented and informational, without a vulnerability claim', () => {
+  it('SS-006 makes no vulnerability claim', () => {
     renderAt('/rules/SS-006')
-    expect(screen.getByRole('heading', { level: 1, name: 'Dependency and toolchain diagnostics' })).toBeInTheDocument()
-    expect(screen.getByText('severity: info')).toBeInTheDocument()
     expect(screen.getByText(/does not consult any advisory database/i)).toBeInTheDocument()
   })
 
-  it('filters by status and shows an empty state', async () => {
+  it('filters by severity and status and shows an empty state', async () => {
     const user = userEvent.setup()
     renderAt('/rules')
-    await user.selectOptions(screen.getByLabelText('Status'), 'implemented')
-    expect(screen.getByTestId('rule-SS-001')).toBeInTheDocument()
-    expect(screen.getByTestId('rule-SS-002')).toBeInTheDocument()
-    expect(screen.queryByTestId('rule-SS-003')).not.toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Severity'), 'info')
+    expect(screen.getByTestId('rule-SS-004')).toBeInTheDocument()
+    expect(screen.getByTestId('rule-SS-006')).toBeInTheDocument()
+    expect(screen.queryByTestId('rule-SS-001')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Status'), 'planned')
-    await user.selectOptions(screen.getByLabelText('Severity'), 'high')
     expect(screen.getByText('No rules match these filters.')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Reset filters' }))
     expect(screen.getByTestId('rule-SS-001')).toBeInTheDocument()
-    expect(screen.getByTestId('rule-SS-003')).toBeInTheDocument()
-  })
-
-  it('filters planned rules by "not assigned" severity', async () => {
-    const user = userEvent.setup()
-    renderAt('/rules')
-    await user.selectOptions(screen.getByLabelText('Severity'), 'none')
-    expect(screen.queryByTestId('rule-SS-001')).not.toBeInTheDocument()
-    expect(screen.getByTestId('rule-SS-003')).toBeInTheDocument()
-  })
-
-  it('shows implemented rule details with limitations', () => {
-    renderAt('/rules/SS-001')
-    expect(screen.getByRole('heading', { level: 1, name: 'Authorization path review' })).toBeInTheDocument()
-    expect(screen.getByText('severity: medium')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Known false positives' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Known false negatives' })).toBeInTheDocument()
-  })
-
-  it('labels a planned rule page as not implemented, with no severity claim', () => {
-    renderAt('/rules/SS-003')
-    expect(screen.getByRole('note')).toHaveTextContent(/planned.*not implemented/i)
-    expect(screen.getByText('severity: not assigned')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Known false positives' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('rule-SS-006')).toBeInTheDocument()
   })
 
   it('shows a not-found state for unknown rule IDs', () => {
@@ -145,14 +128,10 @@ describe('rule catalog data', () => {
 })
 
 describe('landing page honesty', () => {
-  it('shows only implemented rules and never presents planned rules as active', () => {
+  it('lists the implemented rules and mentions no planned rules when none exist', () => {
     renderAt('/')
     expect(screen.getAllByText('SS-001').length).toBeGreaterThan(0)
-    for (const r of rules.filter((r) => r.status === 'planned')) {
-      expect(screen.queryByText(r.id)).not.toBeInTheDocument()
-      expect(screen.queryByText(r.name)).not.toBeInTheDocument()
-    }
-    expect(screen.getByText(/planned and not run by the scanner/i)).toBeInTheDocument()
+    expect(screen.queryByText(/planned and not run by the scanner/i)).not.toBeInTheDocument()
   })
 
   it('uses real fixture output in the terminal preview and states that a clean scan proves nothing', () => {

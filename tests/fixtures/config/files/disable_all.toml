@@ -1,2 +1,2 @@
 [rules]
-disable = ["SS-001", "SS-002", "SS-006"]
+disable = ["SS-001", "SS-002", "SS-003", "SS-004", "SS-005", "SS-006"]

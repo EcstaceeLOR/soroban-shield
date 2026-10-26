@@ -10,6 +10,9 @@ All notable user-visible changes are recorded here. The project follows semantic
 - Project discovery: requires a `Cargo.toml`, requires a `soroban-sdk` dependency in some manifest, skips `target`, `node_modules`, `.git`, `vendor`, `dist` and `build`.
 - Rule `SS-001` (authorization path review, experimental-quality heuristic, medium severity / low confidence).
 - Rule `SS-002` (arithmetic boundary review; low severity / low confidence): unchecked `+ - *` and narrowing or sign-changing `as` casts on integer parameters of public contract functions.
+- Rule `SS-003` (external contract call review; low severity / low confidence): caller-supplied call targets and discarded results of fallible external calls.
+- Rule `SS-004` (error-path review; informational): `unwrap`, `expect`, `panic!`, `todo!` and `unimplemented!` in public contract functions.
+- Rule `SS-005` (state-transition test suggestions; informational): state-changing entrypoints that no test code in the project mentions. Rules can now implement `check_project` to see all parsed files together.
 - Rule `SS-006` (dependency and toolchain diagnostics; informational): unpinned `soroban-sdk`, missing `cdylib` crate type, release profile without `overflow-checks = true`, missing `Cargo.lock` or `rust-toolchain.toml`. Rules can now inspect parsed `Cargo.toml` files through `Rule::check_manifest`.
 - Configuration file `sorobanshield.toml` (or `--config <FILE>`): `[scan] exclude`, `[scan] fail_on`, `[rules] disable`. Strictly validated; invalid configuration exits 2. The JSON report gains `scan.config_file`, `scan.exclude` and `scan.disabled_rules` (additive; schema version stays 1).
 - `scan --format sarif`: SARIF 2.1.0 output (severity mapped to SARIF levels; failed scans reported via `invocations`).

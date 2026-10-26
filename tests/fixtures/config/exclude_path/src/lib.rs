@@ -10,3 +10,6 @@ impl Hello {
         to
     }
 }
+
+#[cfg(test)]
+mod test;

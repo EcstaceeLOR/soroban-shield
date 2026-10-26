@@ -1,3 +1,4 @@
+use crate::common::{has_attr, is_cfg_test, receiver_chain_has_storage, WRITE_CALLS};
 use proc_macro2::Span;
 use sorobanshield_core::{Confidence, Finding, Rule, RuleMeta, RuleStatus, Severity, SourceUnit};
 use std::collections::HashSet;
@@ -9,29 +10,12 @@ pub const ID: &str = "SS-001";
 pub struct AuthorizationPathReview;
 
 const AUTH_CALLS: &[&str] = &["require_auth", "require_auth_for_args"];
-const WRITE_CALLS: &[&str] = &["set", "remove"];
 
 #[derive(Default)]
 struct BodyFacts {
     has_auth: bool,
     callees: HashSet<String>,
     writes: Vec<Span>,
-}
-
-fn receiver_chain_has_storage(mut e: &Expr) -> bool {
-    loop {
-        match e {
-            Expr::MethodCall(m) => {
-                if m.method == "storage" {
-                    return true;
-                }
-                e = &m.receiver;
-            }
-            Expr::Paren(p) => e = &p.expr,
-            Expr::Reference(r) => e = &r.expr,
-            _ => return false,
-        }
-    }
 }
 
 impl<'ast> Visit<'ast> for BodyFacts {
@@ -64,23 +48,6 @@ fn facts(block: &syn::Block) -> BodyFacts {
     let mut f = BodyFacts::default();
     f.visit_block(block);
     f
-}
-
-fn is_cfg_test(attrs: &[syn::Attribute]) -> bool {
-    attrs.iter().any(|a| match &a.meta {
-        syn::Meta::List(l) => {
-            a.path().is_ident("cfg")
-                && l.tokens
-                    .to_string()
-                    .split(|c: char| !c.is_alphanumeric() && c != '_')
-                    .any(|t| t == "test")
-        }
-        _ => false,
-    })
-}
-
-fn has_attr(attrs: &[syn::Attribute], name: &str) -> bool {
-    attrs.iter().any(|a| a.path().is_ident(name))
 }
 
 struct Collector<'a> {

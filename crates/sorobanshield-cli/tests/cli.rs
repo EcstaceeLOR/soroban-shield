@@ -81,7 +81,7 @@ fn json_output_is_valid_and_stable() {
     assert_eq!(v["findings"][0]["rule_id"], "SS-001");
     assert_eq!(v["findings"][0]["file"], "src/lib.rs");
     assert_eq!(v["findings"][0]["start_line"], 10);
-    assert_eq!(v["scan"]["files_scanned"], 1);
+    assert_eq!(v["scan"]["files_scanned"], 2, "src/lib.rs and src/test.rs");
     assert_eq!(
         out(&o),
         out(&scan("positive/unprotected_write", &["--format", "json"]))
@@ -144,18 +144,26 @@ fn unparseable_source_makes_scan_incomplete() {
 }
 
 #[test]
-fn rules_list_marks_planned_rules() {
+fn rules_list_shows_every_rule_as_implemented() {
     let o = run(&["rules", "list"]);
     assert_eq!(code(&o), 0);
     let t = out(&o);
-    assert!(t.contains("SS-001") && t.contains("[implemented]"));
-    assert!(t.contains("SS-002") && t.contains("SS-003") && t.contains("[planned]"));
-    assert!(t
-        .lines()
-        .any(|l| l.starts_with("SS-002") && l.contains("[implemented]")));
+    for id in ["SS-001", "SS-002", "SS-003", "SS-004", "SS-005", "SS-006"] {
+        assert!(
+            t.lines()
+                .any(|l| l.starts_with(id) && l.contains("[implemented]")),
+            "{id} missing or not implemented in:\n{t}"
+        );
+    }
+    assert!(!t.contains("[planned]"));
     let j: serde_json::Value =
         serde_json::from_str(&out(&run(&["rules", "list", "--format", "json"]))).unwrap();
     assert_eq!(j.as_array().unwrap().len(), 6);
+    assert!(j
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|r| r["status"] == "implemented"));
 }
 
 #[test]
@@ -187,7 +195,7 @@ fn ss002_flags_unchecked_arithmetic_and_casts() {
     assert_eq!(f[1]["start_line"], 14);
     assert_eq!(
         v["scan"]["rules_run"],
-        serde_json::json!(["SS-001", "SS-002", "SS-006"])
+        serde_json::json!(["SS-001", "SS-002", "SS-003", "SS-004", "SS-005", "SS-006"])
     );
 }
 
@@ -271,7 +279,7 @@ fn config_can_disable_a_rule_and_report_says_so() {
     let v = json(&o);
     assert_eq!(
         v["scan"]["rules_run"],
-        serde_json::json!(["SS-002", "SS-006"])
+        serde_json::json!(["SS-002", "SS-003", "SS-004", "SS-005", "SS-006"])
     );
     assert_eq!(v["scan"]["disabled_rules"], serde_json::json!(["SS-001"]));
     assert_eq!(v["scan"]["config_file"], "sorobanshield.toml");
@@ -283,7 +291,7 @@ fn config_exclude_skips_paths_and_is_visible() {
     let o = scan("config/exclude_path", &["--format", "json"]);
     assert_eq!(code(&o), 0);
     let v = json(&o);
-    assert_eq!(v["scan"]["files_scanned"], 1);
+    assert_eq!(v["scan"]["files_scanned"], 2, "generated/ is excluded");
     assert_eq!(v["scan"]["exclude"], serde_json::json!(["generated"]));
 
     let empty = fixture("config/files/empty.toml");
@@ -297,7 +305,7 @@ fn config_exclude_skips_paths_and_is_visible() {
         "without the exclusion the generated file is scanned"
     );
     let v = json(&o);
-    assert_eq!(v["scan"]["files_scanned"], 2);
+    assert_eq!(v["scan"]["files_scanned"], 3);
     assert_eq!(v["findings"][0]["file"], "generated/bad.rs");
 }
 
@@ -376,7 +384,7 @@ fn sarif_output_has_expected_structure() {
     let run = &v["runs"][0];
     assert_eq!(run["tool"]["driver"]["name"], "SorobanShield");
     let rules = run["tool"]["driver"]["rules"].as_array().unwrap();
-    assert_eq!(rules.len(), 3);
+    assert_eq!(rules.len(), 6);
     assert_eq!(rules[0]["id"], "SS-001");
     let r = &run["results"][0];
     assert_eq!(r["ruleId"], "SS-001");
@@ -525,12 +533,16 @@ fn baseline_survives_line_shifts_but_not_new_findings() {
     let fresh = run_scan(&["--baseline", base.to_str().unwrap()]);
     assert_eq!(code(&fresh), 1, "a new finding is not hidden");
     let v = json(&fresh);
-    assert_eq!(v["summary"]["total"], 1);
+    let findings = v["findings"].as_array().unwrap();
+    assert_eq!(
+        findings.len(),
+        2,
+        "SS-001 and SS-005 for the new entrypoint"
+    );
     assert_eq!(v["summary"]["suppressed_by_baseline"], 1);
-    assert!(v["findings"][0]["message"]
-        .as_str()
-        .unwrap()
-        .contains("`reset`"));
+    assert!(findings
+        .iter()
+        .all(|f| f["message"].as_str().unwrap().contains("`reset`")));
     let _ = std::fs::remove_dir_all(&d);
 }
 
@@ -589,4 +601,64 @@ fn incomplete_scan_does_not_write_a_baseline() {
     assert!(!base.exists());
     assert!(err(&o).contains("no baseline was written"));
     let _ = std::fs::remove_dir_all(&d);
+}
+
+fn findings_of(rel: &str) -> Vec<serde_json::Value> {
+    let o = scan(rel, &["--format", "json", "--fail-on", "info"]);
+    json(&o)["findings"].as_array().unwrap().clone()
+}
+
+#[test]
+fn ss003_flags_caller_chosen_targets_and_discarded_results() {
+    let f = findings_of("positive/external_calls");
+    assert_eq!(f.len(), 2);
+    assert!(f
+        .iter()
+        .all(|x| x["rule_id"] == "SS-003" && x["severity"] == "low" && x["confidence"] == "low"));
+    assert!(f[0]["message"].as_str().unwrap().contains("`forward`"));
+    assert!(f[1]["message"]
+        .as_str()
+        .unwrap()
+        .contains("`ping_ignoring_failure`"));
+    assert_eq!(code(&scan("positive/external_calls", &[])), 1);
+    assert!(findings_of("negative/safe_external_calls").is_empty());
+}
+
+#[test]
+fn ss004_reports_panics_as_informational_only() {
+    let f = findings_of("positive/panicking_entrypoints");
+    assert_eq!(f.len(), 3);
+    assert!(f
+        .iter()
+        .all(|x| x["rule_id"] == "SS-004" && x["severity"] == "info"));
+    assert_eq!(
+        code(&scan("positive/panicking_entrypoints", &[])),
+        0,
+        "info stays below the default --fail-on low"
+    );
+    assert_eq!(
+        code(&scan(
+            "positive/panicking_entrypoints",
+            &["--fail-on", "info"]
+        )),
+        1
+    );
+    assert!(findings_of("negative/typed_errors").is_empty());
+}
+
+#[test]
+fn ss005_suggests_tests_project_wide() {
+    let none = findings_of("positive/untested_entrypoints");
+    assert_eq!(none.len(), 1);
+    assert_eq!(none[0]["rule_id"], "SS-005");
+    assert!(none[0]["message"]
+        .as_str()
+        .unwrap()
+        .contains("No test code"));
+    assert!(findings_of("negative/tested_entrypoints").is_empty());
+
+    let partial = findings_of("edge/partially_tested");
+    assert_eq!(partial.len(), 1);
+    assert!(partial[0]["message"].as_str().unwrap().contains("`clear`"));
+    assert_eq!(partial[0]["file"], "src/lib.rs");
 }

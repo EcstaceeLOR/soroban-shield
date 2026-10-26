@@ -15,3 +15,6 @@ impl Counter {
         env.storage().instance().set(&symbol_short!("VALUE"), &value);
     }
 }
+
+#[cfg(test)]
+mod test;

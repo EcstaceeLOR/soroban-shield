@@ -8,6 +8,9 @@ const implemented = [
   ['Baselines', 'scan --write-baseline / --baseline hide recorded findings so teams can fail only on new ones; suppression is always shown in the report.'],
   ['SARIF output', 'scan --format sarif writes SARIF 2.1.0 for code-scanning tools.'],
   ['Configuration file', 'sorobanshield.toml: exclude path prefixes, disable rules, set fail_on. Unknown keys and rule IDs are errors.'],
+  ['Rule SS-003', 'External call review: caller-chosen call targets and discarded results of fallible external calls.'],
+  ['Rule SS-004', 'Error-path review: unwrap, expect and panic macros in public contract functions (informational).'],
+  ['Rule SS-005', 'Test suggestions: state-changing entrypoints that no test in the project mentions (informational).'],
   ['Rule SS-006', 'Informational dependency and toolchain diagnostics read from Cargo.toml and project files.'],
   ['Rule SS-002', 'Arithmetic boundary review for unchecked arithmetic and narrowing casts on integer parameters.'],
   ['Text and JSON reports', 'JSON uses a versioned schema; output is deterministic.'],
@@ -17,7 +20,6 @@ const implemented = [
 ]
 
 const planned = [
-  'Rules SS-003 to SS-005 (external calls, error paths, test suggestions)',
   'Inline suppression comments and glob-based exclusions',
   'Multi-contract / workspace reporting',
   'Published releases and prebuilt binaries',

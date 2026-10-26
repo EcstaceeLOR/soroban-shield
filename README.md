@@ -14,10 +14,12 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Rule `SS-001` authorization path review | Implemented (heuristic, medium severity / low confidence) |
 | Rule `SS-002` arithmetic boundary review | Implemented (heuristic, low severity / low confidence) |
 | Rule `SS-006` dependency and toolchain diagnostics | Implemented (informational, reads `Cargo.toml` and project files only) |
-| Rules `SS-003` to `SS-005` | Planned, not run by the scanner |
+| Rule `SS-003` external contract call review | Implemented (heuristic, low severity / low confidence) |
+| Rule `SS-004` error-path review | Implemented (informational, low confidence) |
+| Rule `SS-005` state-transition test suggestions | Implemented (informational, low confidence, project-wide) |
 | Configuration file (`sorobanshield.toml`: exclude paths, disable rules, `fail_on`) | Implemented, strictly validated |
 | SARIF 2.1.0 output (`--format sarif`) | Implemented; sample outputs validated against the official schema (manual check) |
-| Documentation website (`website/`) | In progress, see `website/` |
+| Documentation website (`website/`) | Implemented: 18 routes, generated rule catalog, 51 tests; layout not visually reviewed |
 | CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
 | Baselines (`--write-baseline`, `--baseline`) | Implemented; entries match rule + file + message, not line numbers |
 | Published release / binaries / crates.io | None |
@@ -44,7 +46,7 @@ sorobanshield scan . --fail-on medium      # only exit 1 for medium or higher fi
 sorobanshield scan . --config ci.toml      # use an explicit config file (see docs/configuration.md)
 sorobanshield scan . --write-baseline b.json   # record current findings
 sorobanshield scan . --baseline b.json         # fail only on findings not in the baseline
-sorobanshield rules list                   # all rules; planned ones are labelled
+sorobanshield rules list                   # all rules and their status
 sorobanshield rules explain SS-001         # concern, detection, limitations
 ```
 
@@ -67,14 +69,16 @@ A directory containing `Cargo.toml`, where at least one `Cargo.toml` in the tree
 |---|---|---|
 | SS-001 | Authorization path review | Implemented |
 | SS-002 | Arithmetic boundary review | Implemented |
-| SS-003 | External contract call review | Planned |
-| SS-004 | Error-path review | Planned |
-| SS-005 | State-transition test suggestions | Planned |
+| SS-003 | External contract call review | Implemented |
+| SS-004 | Error-path review | Implemented |
+| SS-005 | State-transition test suggestions | Implemented |
 | SS-006 | Dependency and toolchain diagnostics | Implemented |
 
 **SS-001** reports public `#[contractimpl]` functions that write to contract storage (`.set` / `.remove` on a `.storage()` chain) with no visible `require_auth` / `require_auth_for_args` call in the function or in a same-file helper it calls. It is a review prompt, not a vulnerability claim: authorization enforced in other files, callers or trait methods is invisible to it, and any method named `require_auth` counts as authorization. **SS-002** reports public `#[contractimpl]` functions that apply `+ - *` (or `+= -= *=`) directly to an integer parameter (`i32`/`u32`/`i64`/`u64`/`i128`/`u128`), or cast such a parameter with `as` to a narrower or differently signed type. It is low severity / low confidence: locals, fields and storage values are not tracked, and `overflow-checks` and domain validation are not evaluated.
 
 **SS-006** is informational and reads manifests rather than source. It reports an unpinned `soroban-sdk` (`*`, or a git dependency without `rev`/`tag`), a package depending on `soroban-sdk` without `cdylib` in `[lib] crate-type`, a root manifest without `[profile.release] overflow-checks = true`, and a missing `Cargo.lock` or `rust-toolchain.toml`. It makes no claims about vulnerable dependency versions and consults no advisory data.
+
+**SS-003** reports public `#[contractimpl]` functions that call a contract whose address is a direct `Address` parameter, or that discard the `Result` of a fallible external call (`try_*` on a known client, or `try_invoke_contract`). **SS-004** reports `unwrap`, `expect`, `panic!`, `todo!` and `unimplemented!` in public contract functions (informational; a failed invocation reverts state). **SS-005** looks across the whole project for state-changing entrypoints that no test code mentions (informational; matching is by name).
 
 Run `sorobanshield rules explain <ID>` for the full list of known false positives and negatives.
 
