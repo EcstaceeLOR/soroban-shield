@@ -29,3 +29,14 @@ To keep the report as an artifact, use JSON output and keep the exit code:
 - Pick `--fail-on` deliberately. SS-001 findings are medium severity and low confidence: review prompts, not confirmed bugs.
 - Pin the SorobanShield revision you build so results are reproducible.
 - A passing job means only that the implemented checks reported nothing.
+
+## Uploading SARIF to GitHub code scanning (untested sketch)
+
+```yaml
+- run: sorobanshield scan . --format sarif > sorobanshield.sarif || [ $? -eq 1 ]
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: sorobanshield.sarif
+```
+
+The `|| [ $? -eq 1 ]` lets findings (exit 1) through to the upload step while still failing the job on exit codes 2 and 3. This snippet has not been run against a real repository.

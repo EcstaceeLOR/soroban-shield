@@ -10,7 +10,7 @@ const items: { title: string; state: State; note: string }[] = [
   { title: 'Documentation website', state: 'in progress', note: 'Initial version: landing page, docs, generated rule catalog.' },
   { title: 'CI workflow', state: 'done', note: 'Repository workflow (fmt, clippy, tests, website build) ran successfully on its first push to main.' },
   { title: 'Configuration file', state: 'done', note: 'sorobanshield.toml: path-prefix exclusions, rule disabling and fail_on, strictly validated.' },
-  { title: 'SARIF output', state: 'planned', note: 'Not implemented.' },
+  { title: 'SARIF output', state: 'done', note: 'SARIF 2.1.0 via --format sarif; sample outputs were validated against the official schema by hand, not in CI.' },
   { title: 'Additional rules SS-003 to SS-005', state: 'planned', note: 'Each will ship only with fixtures, tests and documented limitations.' },
   { title: 'First tagged release', state: 'planned', note: 'No release has been published. Build from source.' },
   { title: 'Independent security review', state: 'planned', note: 'Not performed.' },

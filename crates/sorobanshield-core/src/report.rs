@@ -1,5 +1,6 @@
 use crate::engine::{ScanError, ScanOutcome};
 use crate::finding::{Finding, Severity};
+use crate::rule::RuleMeta;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fmt::Write;
@@ -84,6 +85,101 @@ impl Report {
 
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).expect("report serialises")
+    }
+
+    /// SARIF 2.1.0 log. `metas` describes the rules that ran.
+    pub fn to_sarif(&self, metas: &[RuleMeta]) -> String {
+        use serde_json::{json, Value};
+
+        fn level(s: Option<Severity>) -> &'static str {
+            match s {
+                Some(Severity::Critical | Severity::High) => "error",
+                Some(Severity::Medium) => "warning",
+                _ => "note",
+            }
+        }
+        fn location(file: &str, region: Option<Value>) -> Value {
+            let mut physical = json!({
+                "artifactLocation": { "uri": file, "uriBaseId": "%SRCROOT%" }
+            });
+            if let Some(r) = region {
+                physical["region"] = r;
+            }
+            json!({ "physicalLocation": physical })
+        }
+
+        let rules: Vec<Value> = metas
+            .iter()
+            .map(|m| {
+                json!({
+                    "id": m.id,
+                    "name": m.name.split_whitespace().collect::<String>(),
+                    "shortDescription": { "text": m.name },
+                    "fullDescription": { "text": m.concern },
+                    "help": { "text": m.remediation },
+                    "defaultConfiguration": { "level": level(m.severity) },
+                    "properties": {
+                        "severity": m.severity.map(|s| s.to_string()),
+                        "confidence": m.confidence.map(|c| c.to_string()),
+                    }
+                })
+            })
+            .collect();
+
+        let results: Vec<Value> = self
+            .findings
+            .iter()
+            .map(|f| {
+                let region = f
+                    .start_line
+                    .map(|s| json!({ "startLine": s, "endLine": f.end_line.unwrap_or(s) }));
+                json!({
+                    "ruleId": f.rule_id,
+                    "ruleIndex": metas.iter().position(|m| m.id == f.rule_id),
+                    "level": level(Some(f.severity)),
+                    "message": { "text": format!("{} Next step: {}", f.message, f.remediation) },
+                    "locations": [location(&f.file, region)],
+                    "properties": {
+                        "severity": f.severity.to_string(),
+                        "confidence": f.confidence.to_string(),
+                        "limitations": f.limitations,
+                    }
+                })
+            })
+            .collect();
+
+        let notifications: Vec<Value> = self
+            .scan
+            .errors
+            .iter()
+            .map(|e| {
+                json!({
+                    "level": "error",
+                    "message": { "text": e.message },
+                    "locations": [location(&e.file, None)],
+                })
+            })
+            .collect();
+
+        let log = json!({
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [{
+                "tool": { "driver": {
+                    "name": "SorobanShield",
+                    "version": self.tool.version,
+                    "informationUri": "https://github.com/sorobanshield/soroban-shield",
+                    "rules": rules,
+                }},
+                "results": results,
+                "invocations": [{
+                    "executionSuccessful": self.scan.errors.is_empty(),
+                    "toolExecutionNotifications": notifications,
+                }],
+                "properties": { "disclaimer": DISCLAIMER },
+            }]
+        });
+        serde_json::to_string_pretty(&log).expect("sarif serialises")
     }
 
     pub fn to_terminal(&self) -> String {

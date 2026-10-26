@@ -16,7 +16,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Rule `SS-006` dependency and toolchain diagnostics | Implemented (informational, reads `Cargo.toml` and project files only) |
 | Rules `SS-003` to `SS-005` | Planned, not run by the scanner |
 | Configuration file (`sorobanshield.toml`: exclude paths, disable rules, `fail_on`) | Implemented, strictly validated |
-| SARIF output | Not implemented |
+| SARIF 2.1.0 output (`--format sarif`) | Implemented; sample outputs validated against the official schema (manual check) |
 | Documentation website (`website/`) | In progress, see `website/` |
 | CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
 | Published release / binaries / crates.io | None |
@@ -38,6 +38,7 @@ cargo build --release
 ```bash
 sorobanshield scan .                       # human-readable report
 sorobanshield scan . --format json         # machine-readable report (schema v1)
+sorobanshield scan . --format sarif        # SARIF 2.1.0 for code-scanning tools
 sorobanshield scan . --fail-on medium      # only exit 1 for medium or higher findings
 sorobanshield scan . --config ci.toml      # use an explicit config file (see docs/configuration.md)
 sorobanshield rules list                   # all rules; planned ones are labelled

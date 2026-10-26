@@ -1,6 +1,6 @@
 # Reports
 
-SorobanShield prints either a human-readable text report or a JSON document. Both carry the same findings. SARIF is **planned** and not implemented.
+SorobanShield prints a human-readable text report, a JSON document or a SARIF 2.1.0 log. All carry the same findings.
 
 ## Text report
 
@@ -52,3 +52,9 @@ Each finding has `rule_id`, `title`, `severity`, `confidence`, `message`, `file`
 ```
 
 Severity (potential impact) and confidence (how sure the rule is that the pattern matters) are separate fields. A fatal error such as a missing path prints a message to stderr and no JSON; check the exit code.
+
+## SARIF output
+
+`sorobanshield scan --format sarif` writes a SARIF 2.1.0 log for code-scanning tools. Severity maps to the SARIF `level`: `critical` and `high` become `error`, `medium` becomes `warning`, and `low` and `info` become `note`. The original severity and confidence are kept in each result's `properties`. Findings carry a file URI relative to the scan root (`uriBaseId` `%SRCROOT%`) and, when known, a line region; manifest findings have no region. `invocations[0].executionSuccessful` is `false`, with a notification per file, when files could not be analyzed.
+
+The output of this repository's fixtures was validated against the official OASIS SARIF 2.1.0 JSON schema during development. That validation is a manual step and is not part of CI. SARIF is only available for `scan`, not for `rules list` or `rules explain`.

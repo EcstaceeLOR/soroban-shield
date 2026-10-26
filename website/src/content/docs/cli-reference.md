@@ -23,7 +23,7 @@ Scans a Soroban project. `PATH` defaults to `.` and must be a project root conta
 
 | Option | Values | Default | Meaning |
 | --- | --- | --- | --- |
-| `--format` | `text`, `json` | `text` | Output format on stdout. |
+| `--format` | `text`, `json`, `sarif` | `text` | Output format on stdout. SARIF is available for `scan` only. |
 | `--fail-on` | `info`, `low`, `medium`, `high`, `critical` | `low` (or `fail_on` from the config file) | Exit `1` when any finding has at least this severity. The flag overrides the config file. |
 | `--config` | file path | `<PATH>/sorobanshield.toml` if it exists | Configuration file; see [Configuration](/docs/configuration). |
 

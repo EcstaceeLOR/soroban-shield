@@ -366,3 +366,66 @@ fn malformed_auto_discovered_config_is_not_ignored() {
     let _ = std::fs::remove_dir_all(&d);
     assert_eq!(code(&o), 2);
 }
+
+#[test]
+fn sarif_output_has_expected_structure() {
+    let o = scan("positive/unprotected_write", &["--format", "sarif"]);
+    assert_eq!(code(&o), 1);
+    let v = json(&o);
+    assert_eq!(v["version"], "2.1.0");
+    let run = &v["runs"][0];
+    assert_eq!(run["tool"]["driver"]["name"], "SorobanShield");
+    let rules = run["tool"]["driver"]["rules"].as_array().unwrap();
+    assert_eq!(rules.len(), 3);
+    assert_eq!(rules[0]["id"], "SS-001");
+    let r = &run["results"][0];
+    assert_eq!(r["ruleId"], "SS-001");
+    assert_eq!(r["ruleIndex"], 0);
+    assert_eq!(r["level"], "warning");
+    let loc = &r["locations"][0]["physicalLocation"];
+    assert_eq!(loc["artifactLocation"]["uri"], "src/lib.rs");
+    assert_eq!(loc["region"]["startLine"], 10);
+    assert_eq!(run["invocations"][0]["executionSuccessful"], true);
+    assert_eq!(
+        out(&o),
+        out(&scan("positive/unprotected_write", &["--format", "sarif"]))
+    );
+}
+
+#[test]
+fn sarif_levels_and_manifest_findings_without_regions() {
+    let v = json(&scan("positive/poor_metadata", &["--format", "sarif"]));
+    let results = v["runs"][0]["results"].as_array().unwrap();
+    assert_eq!(results.len(), 5);
+    for r in results {
+        assert_eq!(r["level"], "note");
+        let phys = &r["locations"][0]["physicalLocation"];
+        assert_eq!(phys["artifactLocation"]["uri"], "Cargo.toml");
+        assert!(
+            phys.get("region").is_none(),
+            "manifest findings have no line numbers"
+        );
+    }
+    let low = json(&scan(
+        "positive/unchecked_arithmetic",
+        &["--format", "sarif"],
+    ));
+    assert_eq!(low["runs"][0]["results"][0]["level"], "note");
+}
+
+#[test]
+fn sarif_reports_failed_scans_as_unsuccessful() {
+    let o = scan("invalid/malformed_source", &["--format", "sarif"]);
+    assert_eq!(code(&o), 3);
+    let inv = &json(&o)["runs"][0]["invocations"][0];
+    assert_eq!(inv["executionSuccessful"], false);
+    assert_eq!(
+        inv["toolExecutionNotifications"].as_array().unwrap().len(),
+        1
+    );
+}
+
+#[test]
+fn rules_commands_do_not_accept_sarif() {
+    assert_eq!(code(&run(&["rules", "list", "--format", "sarif"])), 2);
+}

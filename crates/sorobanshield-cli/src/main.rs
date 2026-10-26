@@ -26,6 +26,14 @@ enum Format {
     Json,
 }
 
+#[derive(Clone, Copy, ValueEnum)]
+enum ScanFormat {
+    Text,
+    Json,
+    /// SARIF 2.1.0, for code-scanning tools
+    Sarif,
+}
+
 #[derive(Subcommand)]
 enum Command {
     /// Scan a Soroban project directory
@@ -34,7 +42,7 @@ enum Command {
         #[arg(default_value = ".")]
         path: PathBuf,
         #[arg(long, value_enum, default_value = "text")]
-        format: Format,
+        format: ScanFormat,
         /// Exit with code 1 when a finding has at least this severity (info, low, medium, high, critical).
         /// Overrides the config file; defaults to low.
         #[arg(long, value_parser = parse_severity)]
@@ -87,7 +95,12 @@ fn main() -> ExitCode {
     })
 }
 
-fn scan(path: PathBuf, format: Format, fail_on: Option<Severity>, config: Option<PathBuf>) -> u8 {
+fn scan(
+    path: PathBuf,
+    format: ScanFormat,
+    fail_on: Option<Severity>,
+    config: Option<PathBuf>,
+) -> u8 {
     let runnable: Vec<String> = sorobanshield_rules::active_rules()
         .iter()
         .map(|r| r.meta().id)
@@ -128,8 +141,12 @@ fn scan(path: PathBuf, format: Format, fail_on: Option<Severity>, config: Option
     report.scan.disabled_rules = cfg.rules.disable.clone();
 
     match format {
-        Format::Json => println!("{}", report.to_json()),
-        Format::Text => print!("{}", report.to_terminal()),
+        ScanFormat::Json => println!("{}", report.to_json()),
+        ScanFormat::Text => print!("{}", report.to_terminal()),
+        ScanFormat::Sarif => {
+            let metas: Vec<_> = rules.iter().map(|r| r.meta()).collect();
+            println!("{}", report.to_sarif(&metas));
+        }
     }
     let threshold = fail_on.or(cfg.scan.fail_on).unwrap_or(Severity::Low);
     if report.has_errors() {
