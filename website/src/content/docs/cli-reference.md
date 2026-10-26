@@ -40,7 +40,7 @@ Lists every rule in the catalog, including planned rules. Planned rules are meta
 
 ```text
 SS-001  [implemented] Authorization path review
-SS-002  [planned]     Arithmetic boundary review
+SS-002  [implemented] Arithmetic boundary review
 SS-003  [planned]     External contract call review
 SS-004  [planned]     Error-path review
 SS-005  [planned]     State-transition test suggestions

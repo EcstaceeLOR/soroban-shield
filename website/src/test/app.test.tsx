@@ -63,24 +63,31 @@ describe('routes', () => {
 })
 
 describe('rule catalog data', () => {
-  it('is generated from the CLI and marks only SS-001 as implemented', () => {
+  it('is generated from the CLI and marks only SS-001 and SS-002 as implemented', () => {
     const implemented = rules.filter((r) => r.status === 'implemented').map((r) => r.id)
-    expect(implemented).toEqual(['SS-001'])
+    expect(implemented).toEqual(['SS-001', 'SS-002'])
     for (const r of rules.filter((r) => r.status === 'planned')) {
       expect(r.severity).toBeNull()
       expect(r.confidence).toBeNull()
     }
   })
 
-  it('lists SS-001 as implemented and SS-002 as planned without severity', () => {
+  it('lists SS-001 as implemented and SS-003 as planned without severity', () => {
     renderAt('/rules')
     const ss1 = within(screen.getByTestId('rule-SS-001'))
     expect(ss1.getByTestId('status-badge')).toHaveTextContent('implemented')
     expect(ss1.getByText('severity: medium')).toBeInTheDocument()
-    const ss2 = within(screen.getByTestId('rule-SS-002'))
+    const ss2 = within(screen.getByTestId('rule-SS-003'))
     expect(ss2.getByTestId('status-badge')).toHaveTextContent('planned')
     expect(ss2.queryByText(/severity:/)).not.toBeInTheDocument()
     expect(ss2.getByText(/not run by the scanner/i)).toBeInTheDocument()
+  })
+
+  it('shows SS-002 as implemented with low severity and low confidence', () => {
+    renderAt('/rules')
+    const ss2 = within(screen.getByTestId('rule-SS-002'))
+    expect(ss2.getByTestId('status-badge')).toHaveTextContent('implemented')
+    expect(ss2.getByText('severity: low')).toBeInTheDocument()
   })
 
   it('filters by status and shows an empty state', async () => {
@@ -88,7 +95,8 @@ describe('rule catalog data', () => {
     renderAt('/rules')
     await user.selectOptions(screen.getByLabelText('Status'), 'implemented')
     expect(screen.getByTestId('rule-SS-001')).toBeInTheDocument()
-    expect(screen.queryByTestId('rule-SS-002')).not.toBeInTheDocument()
+    expect(screen.getByTestId('rule-SS-002')).toBeInTheDocument()
+    expect(screen.queryByTestId('rule-SS-003')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Status'), 'planned')
     await user.selectOptions(screen.getByLabelText('Severity'), 'high')
@@ -96,7 +104,7 @@ describe('rule catalog data', () => {
 
     await user.click(screen.getByRole('button', { name: 'Reset filters' }))
     expect(screen.getByTestId('rule-SS-001')).toBeInTheDocument()
-    expect(screen.getByTestId('rule-SS-002')).toBeInTheDocument()
+    expect(screen.getByTestId('rule-SS-003')).toBeInTheDocument()
   })
 
   it('filters planned rules by "not assigned" severity', async () => {
@@ -116,7 +124,7 @@ describe('rule catalog data', () => {
   })
 
   it('labels a planned rule page as not implemented, with no severity claim', () => {
-    renderAt('/rules/SS-002')
+    renderAt('/rules/SS-003')
     expect(screen.getByRole('note')).toHaveTextContent(/planned.*not implemented/i)
     expect(screen.getByText('severity: not assigned')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Known false positives' })).not.toBeInTheDocument()

@@ -12,11 +12,12 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Project discovery and validation | Implemented, tested |
 | Terminal and JSON reports (schema v1) | Implemented, tested |
 | Rule `SS-001` authorization path review | Implemented (heuristic, medium severity / low confidence) |
-| Rules `SS-002` to `SS-006` | Planned, not run by the scanner |
+| Rule `SS-002` arithmetic boundary review | Implemented (heuristic, low severity / low confidence) |
+| Rules `SS-003` to `SS-006` | Planned, not run by the scanner |
 | Configuration file | Not implemented |
 | SARIF output | Not implemented |
 | Documentation website (`website/`) | In progress, see `website/` |
-| CI workflow | Added in `.github/workflows/ci.yml`; has not yet run on GitHub |
+| CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
 | Published release / binaries / crates.io | None |
 | Independent security review | Not performed |
 
@@ -59,13 +60,15 @@ A directory containing `Cargo.toml`, where at least one `Cargo.toml` in the tree
 | ID | Name | Status |
 |---|---|---|
 | SS-001 | Authorization path review | Implemented |
-| SS-002 | Arithmetic boundary review | Planned |
+| SS-002 | Arithmetic boundary review | Implemented |
 | SS-003 | External contract call review | Planned |
 | SS-004 | Error-path review | Planned |
 | SS-005 | State-transition test suggestions | Planned |
 | SS-006 | Dependency and toolchain diagnostics | Planned |
 
-**SS-001** reports public `#[contractimpl]` functions that write to contract storage (`.set` / `.remove` on a `.storage()` chain) with no visible `require_auth` / `require_auth_for_args` call in the function or in a same-file helper it calls. It is a review prompt, not a vulnerability claim: authorization enforced in other files, callers or trait methods is invisible to it, and any method named `require_auth` counts as authorization. Run `sorobanshield rules explain SS-001` for the full list of known false positives and negatives.
+**SS-001** reports public `#[contractimpl]` functions that write to contract storage (`.set` / `.remove` on a `.storage()` chain) with no visible `require_auth` / `require_auth_for_args` call in the function or in a same-file helper it calls. It is a review prompt, not a vulnerability claim: authorization enforced in other files, callers or trait methods is invisible to it, and any method named `require_auth` counts as authorization. **SS-002** reports public `#[contractimpl]` functions that apply `+ - *` (or `+= -= *=`) directly to an integer parameter (`i32`/`u32`/`i64`/`u64`/`i128`/`u128`), or cast such a parameter with `as` to a narrower or differently signed type. It is low severity / low confidence: locals, fields and storage values are not tracked, and `overflow-checks` and domain validation are not evaluated.
+
+Run `sorobanshield rules explain <ID>` for the full list of known false positives and negatives.
 
 ## Repository layout
 

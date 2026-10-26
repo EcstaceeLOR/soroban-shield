@@ -149,7 +149,10 @@ fn rules_list_marks_planned_rules() {
     assert_eq!(code(&o), 0);
     let t = out(&o);
     assert!(t.contains("SS-001") && t.contains("[implemented]"));
-    assert!(t.contains("SS-002") && t.contains("[planned]"));
+    assert!(t.contains("SS-002") && t.contains("SS-003") && t.contains("[planned]"));
+    assert!(t
+        .lines()
+        .any(|l| l.starts_with("SS-002") && l.contains("[implemented]")));
     let j: serde_json::Value =
         serde_json::from_str(&out(&run(&["rules", "list", "--format", "json"]))).unwrap();
     assert_eq!(j.as_array().unwrap().len(), 6);
@@ -168,4 +171,43 @@ fn rules_explain_known_and_unknown() {
 #[test]
 fn unknown_command_is_usage_error() {
     assert_eq!(code(&run(&["frobnicate"])), 2);
+}
+
+#[test]
+fn ss002_flags_unchecked_arithmetic_and_casts() {
+    let o = scan("positive/unchecked_arithmetic", &["--format", "json"]);
+    assert_eq!(code(&o), 1);
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    let f = v["findings"].as_array().unwrap();
+    assert_eq!(f.len(), 2);
+    assert!(f
+        .iter()
+        .all(|x| x["rule_id"] == "SS-002" && x["severity"] == "low" && x["confidence"] == "low"));
+    assert_eq!(f[0]["start_line"], 10);
+    assert_eq!(f[1]["start_line"], 14);
+    assert_eq!(
+        v["scan"]["rules_run"],
+        serde_json::json!(["SS-001", "SS-002"])
+    );
+}
+
+#[test]
+fn ss002_negative_and_edge_fixtures_are_clean() {
+    for f in [
+        "negative/checked_arithmetic",
+        "edge/local_arithmetic_untracked",
+    ] {
+        assert_eq!(code(&scan(f, &[])), 0, "{f}");
+    }
+}
+
+#[test]
+fn ss002_low_severity_respects_fail_on() {
+    assert_eq!(
+        code(&scan(
+            "positive/unchecked_arithmetic",
+            &["--fail-on", "medium"]
+        )),
+        0
+    );
 }

@@ -9,6 +9,7 @@ All notable user-visible changes are recorded here. The project follows semantic
 - `sorobanshield rules list` and `sorobanshield rules explain <ID>`, each with `--format json`.
 - Project discovery: requires a `Cargo.toml`, requires a `soroban-sdk` dependency in some manifest, skips `target`, `node_modules`, `.git`, `vendor`, `dist` and `build`.
 - Rule `SS-001` (authorization path review, experimental-quality heuristic, medium severity / low confidence).
+- Rule `SS-002` (arithmetic boundary review; low severity / low confidence): unchecked `+ - *` and narrowing or sign-changing `as` casts on integer parameters of public contract functions.
 - JSON report schema version 1.
 - Exit codes: 0 no findings at or above the threshold, 1 findings at or above it, 2 invalid usage, 3 scan could not be completed (including unparseable source files).
 - Documentation website under `website/`.

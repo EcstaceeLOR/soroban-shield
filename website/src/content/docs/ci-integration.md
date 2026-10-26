@@ -1,6 +1,6 @@
 # CI integration
 
-> **Status: untested.** The steps below follow from the documented exit codes. No CI workflow for SorobanShield has been run yet, and no prebuilt binary exists, so a CI job must build the tool from source.
+> **Status: untested.** The steps below follow from the documented exit codes. They have not been run in CI against a real project, and no prebuilt binary exists, so a CI job must build the tool from source. (This repository's own workflow, which checks SorobanShield itself, has run successfully.)
 
 ## How the exit codes map to CI
 

@@ -4,12 +4,13 @@ type State = 'done' | 'in progress' | 'planned'
 const items: { title: string; state: State; note: string }[] = [
   { title: 'CLI foundation', state: 'done', note: 'Project discovery and validation, finding model, text reporter, help and version.' },
   { title: 'First tested rule (SS-001)', state: 'done', note: 'Syntax-aware authorization path review with positive, negative and edge fixtures.' },
+  { title: 'Second tested rule (SS-002)', state: 'done', note: 'Arithmetic boundary review for integer parameters of public contract functions, with positive, negative and edge fixtures.' },
   { title: 'JSON report and exit codes', state: 'done', note: 'Versioned JSON schema, --fail-on threshold, exit codes 0 to 3, integration tests.' },
   { title: 'Documentation website', state: 'in progress', note: 'Initial version: landing page, docs, generated rule catalog.' },
-  { title: 'CI workflow', state: 'in progress', note: 'No workflow has been verified yet; CI documentation is marked untested.' },
+  { title: 'CI workflow', state: 'done', note: 'Repository workflow (fmt, clippy, tests, website build) ran successfully on its first push to main.' },
   { title: 'Configuration file', state: 'planned', note: 'Not implemented. Only command-line flags exist today.' },
   { title: 'SARIF output', state: 'planned', note: 'Not implemented.' },
-  { title: 'Additional rules SS-002 to SS-006', state: 'planned', note: 'Each will ship only with fixtures, tests and documented limitations.' },
+  { title: 'Additional rules SS-003 to SS-006', state: 'planned', note: 'Each will ship only with fixtures, tests and documented limitations.' },
   { title: 'First tagged release', state: 'planned', note: 'No release has been published. Build from source.' },
   { title: 'Independent security review', state: 'planned', note: 'Not performed.' },
 ]

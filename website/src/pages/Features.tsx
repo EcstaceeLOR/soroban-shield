@@ -5,6 +5,7 @@ const implemented = [
   ['CLI scanning', 'sorobanshield scan [PATH] with project discovery and validation.'],
   ['Syntax-aware analysis', 'Rust files are parsed with syn; project code is never compiled or executed.'],
   ['Rule SS-001', 'Authorization path review for public contract functions that write storage.'],
+  ['Rule SS-002', 'Arithmetic boundary review for unchecked arithmetic and narrowing casts on integer parameters.'],
   ['Text and JSON reports', 'JSON uses a versioned schema; output is deterministic.'],
   ['Exit codes and --fail-on', 'Distinguishes findings (1), invalid usage (2) and scans that could not complete (3).'],
   ['Rule catalog commands', 'rules list and rules explain, with JSON output.'],
@@ -12,7 +13,7 @@ const implemented = [
 ]
 
 const planned = [
-  'Rules SS-002 to SS-006 (arithmetic, external calls, error paths, test suggestions, toolchain diagnostics)',
+  'Rules SS-003 to SS-006 (external calls, error paths, test suggestions, toolchain diagnostics)',
   'SARIF output',
   'Configuration file and rule exclusions',
   'Baseline support for introducing scanning gradually',

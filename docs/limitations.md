@@ -7,7 +7,7 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Analysis is per file and syntactic. Macros are not expanded, types are not resolved, and there is no control-flow or cross-file analysis.
 - Only Rust source and `Cargo.toml` are examined, not compiled WASM.
 - A clean scan means only that the implemented checks reported nothing.
-- Only one rule (SS-001) is implemented. SS-002 to SS-006 are planned and do not run.
+- Two rules (SS-001, SS-002) are implemented. SS-003 to SS-006 are planned and do not run.
 
 ## SS-001 false positives
 
@@ -22,6 +22,19 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Storage writes via macros, helpers in other files, or APIs other than `set`/`remove`.
 - Non-`pub` functions, code outside `#[contractimpl]`, and generated code.
 - Items under `#[cfg(test)]` are intentionally skipped.
+
+## SS-002 false positives
+
+- Arithmetic on values already bounded by earlier validation or by the domain.
+- Builds with `overflow-checks` enabled, where overflow traps deterministically and that is acceptable.
+- Intentional wrapping or truncating behavior.
+
+## SS-002 false negatives
+
+- Arithmetic on locals, struct fields, storage reads or function results: only direct integer-parameter operands are tracked.
+- Operations in private helpers, other files or macros.
+- Type aliases, and `i8`/`i16`/`u8`/`u16`/`usize`/`isize` parameters.
+- Division, remainder, shifts, casts of non-parameter expressions, and fixed-point rounding issues.
 
 ## Other
 

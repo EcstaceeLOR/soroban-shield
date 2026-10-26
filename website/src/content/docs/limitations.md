@@ -4,11 +4,11 @@ Static analysis cannot prove that a contract is secure. SorobanShield helps poin
 
 ## What a clean scan means
 
-Only that the implemented checks, under the conditions of that scan, reported nothing. Today there is **one** implemented rule ([SS-001](/rules/SS-001)). Authorization bugs outside its pattern, arithmetic issues, cross-contract problems, logic errors and economic attacks are all out of scope.
+Only that the implemented checks, under the conditions of that scan, reported nothing. Today there are **two** implemented rules ([SS-001](/rules/SS-001) and [SS-002](/rules/SS-002)). Authorization bugs outside SS-001's pattern, arithmetic problems outside SS-002's pattern (it only tracks integer function parameters), cross-contract problems, logic errors and economic attacks are all out of scope.
 
 ## False positives
 
-Findings are review prompts. SS-001 can report functions that are intentionally unauthenticated (for example one-time initialization), or whose authorization is enforced in another file, a caller or a trait method.
+Findings are review prompts. SS-002 reports arithmetic that may be perfectly safe when values are validated or overflow-checks is enabled. SS-001 can report functions that are intentionally unauthenticated (for example one-time initialization), or whose authorization is enforced in another file, a caller or a trait method.
 
 ## False negatives
 

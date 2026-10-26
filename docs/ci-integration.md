@@ -1,6 +1,6 @@
 # CI integration
 
-This repository's own workflow is `.github/workflows/ci.yml` (rustfmt, clippy, tests, website lint/typecheck/test/build). **It has not yet been run on GitHub**, so treat it as untested until a run is green.
+This repository's own workflow is `.github/workflows/ci.yml` (rustfmt, clippy, tests, website lint/typecheck/test/build). Its first run on `main` passed.
 
 To gate a project on SorobanShield you need the binary in CI. Since no release exists, build it from source in the job. The following is an untested sketch:
 

@@ -12,7 +12,7 @@ export default function HowItWorks() {
         <p>Each file is parsed into a syntax tree. Nothing is compiled and no build script or project code is run. A file that cannot be read or parsed is recorded as an error and makes the whole scan incomplete (exit code 3).</p>
       </Section>
       <Section title="3. Rules">
-        <p>Each implemented rule inspects the syntax tree. Today that is <Link className="text-accent underline" to="/rules/SS-001">SS-001</Link>, which looks for public <code>#[contractimpl]</code> functions that write storage without a visible <code>require_auth</code>. Planned rules are never run.</p>
+        <p>Each implemented rule inspects the syntax tree. Today that is <Link className="text-accent underline" to="/rules/SS-001">SS-001</Link>, which looks for public <code>#[contractimpl]</code> functions that write storage without a visible <code>require_auth</code>, and <Link className="text-accent underline" to="/rules/SS-002">SS-002</Link>, which looks for unchecked arithmetic and narrowing casts on integer parameters. Planned rules are never run.</p>
       </Section>
       <Section title="4. Findings and reports">
         <p>Findings carry a rule ID, severity (potential impact), confidence (how sure the rule is), location, message, remediation and limitations. They are sorted by file and line, then printed as text or JSON.</p>

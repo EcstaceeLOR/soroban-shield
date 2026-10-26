@@ -5,7 +5,7 @@ SorobanShield prints either a human-readable text report or a JSON document. Bot
 ## Text report
 
 ```text
-SorobanShield 0.1.0 - scanned 1 file(s) with 1 rule(s)
+SorobanShield 0.1.0 - scanned 1 file(s) with 2 rule(s)
 
 [1] SS-001 Authorization path review (severity: medium, confidence: low)
     at src/lib.rs:10
@@ -41,7 +41,7 @@ Each finding has `rule_id`, `title`, `severity`, `confidence`, `message`, `file`
 {
   "schema_version": 1,
   "tool": { "name": "sorobanshield", "version": "0.1.0" },
-  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001"], "errors": [] },
+  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001", "SS-002"], "errors": [] },
   "summary": { "total": 0, "by_severity": { "critical": 0, "high": 0, "info": 0, "low": 0, "medium": 0 } },
   "findings": [],
   "disclaimer": "Static analysis cannot prove a contract is secure. ..."

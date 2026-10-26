@@ -1,11 +1,15 @@
 pub mod planned;
 pub mod ss001;
+pub mod ss002;
 
 use sorobanshield_core::{Rule, RuleMeta};
 
 /// Rules that are implemented and run during a scan.
 pub fn active_rules() -> Vec<Box<dyn Rule>> {
-    vec![Box::new(ss001::AuthorizationPathReview)]
+    vec![
+        Box::new(ss001::AuthorizationPathReview),
+        Box::new(ss002::ArithmeticBoundaryReview),
+    ]
 }
 
 /// Metadata for every known rule: implemented ones first, then planned ones.
