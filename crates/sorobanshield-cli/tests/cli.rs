@@ -187,7 +187,7 @@ fn ss002_flags_unchecked_arithmetic_and_casts() {
     assert_eq!(f[1]["start_line"], 14);
     assert_eq!(
         v["scan"]["rules_run"],
-        serde_json::json!(["SS-001", "SS-002"])
+        serde_json::json!(["SS-001", "SS-002", "SS-006"])
     );
 }
 
@@ -210,4 +210,52 @@ fn ss002_low_severity_respects_fail_on() {
         )),
         0
     );
+}
+
+#[test]
+fn ss006_reports_five_informational_diagnostics() {
+    let o = scan("positive/poor_metadata", &["--format", "json"]);
+    assert_eq!(
+        code(&o),
+        0,
+        "info findings are below the default --fail-on low"
+    );
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    let f = v["findings"].as_array().unwrap();
+    assert_eq!(f.len(), 5);
+    assert!(f
+        .iter()
+        .all(|x| x["rule_id"] == "SS-006" && x["severity"] == "info" && x["file"] == "Cargo.toml"));
+    assert!(f.iter().all(|x| x["start_line"].is_null()));
+    assert_eq!(v["summary"]["by_severity"]["info"], 5);
+    let text = f
+        .iter()
+        .map(|x| x["message"].as_str().unwrap())
+        .collect::<Vec<_>>()
+        .join("\n");
+    for needle in [
+        "wildcard",
+        "cdylib",
+        "overflow-checks",
+        "Cargo.lock",
+        "rust-toolchain",
+    ] {
+        assert!(text.contains(needle), "missing diagnostic about {needle}");
+    }
+}
+
+#[test]
+fn ss006_fails_the_build_only_when_asked() {
+    assert_eq!(
+        code(&scan("positive/poor_metadata", &["--fail-on", "info"])),
+        1
+    );
+    assert_eq!(code(&scan("positive/poor_metadata", &[])), 0);
+}
+
+#[test]
+fn ss006_terminal_output_has_no_line_suffix() {
+    let t = out(&scan("positive/poor_metadata", &[]));
+    assert!(t.contains("at Cargo.toml\n"), "{t}");
+    assert!(t.contains("severity: info"));
 }

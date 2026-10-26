@@ -9,7 +9,7 @@ pub trait Rule: Sync {
 }
 ```
 
-`SourceUnit` carries the project-relative path and the parsed `syn::File`. Rules are pure functions of the syntax tree: no I/O, no process execution, no network.
+A rule can also implement `check_manifest(&self, &ManifestUnit)` to inspect a parsed `Cargo.toml` (see `ss006.rs`); both methods default to returning no findings. `SourceUnit` carries the project-relative path and the parsed `syn::File`. Rules are pure functions of the syntax tree: no I/O, no process execution, no network.
 
 ## Workflow
 

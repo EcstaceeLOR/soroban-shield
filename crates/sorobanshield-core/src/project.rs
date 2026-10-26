@@ -25,10 +25,19 @@ pub enum ProjectError {
     NoSources(String),
 }
 
+/// A parsed `Cargo.toml` found in the project.
+#[derive(Debug)]
+pub struct Manifest {
+    /// Path relative to the scan root, `/`-separated.
+    pub path: String,
+    pub table: toml::Table,
+}
+
 #[derive(Debug)]
 pub struct Project {
     pub root: PathBuf,
     pub sources: Vec<PathBuf>,
+    pub manifests: Vec<Manifest>,
 }
 
 fn declares_soroban(table: &toml::Table) -> bool {
@@ -67,6 +76,7 @@ impl Project {
 
         let mut soroban = false;
         let mut sources = Vec::new();
+        let mut manifests = Vec::new();
         let walker = WalkDir::new(root)
             .follow_links(false)
             .sort_by_file_name()
@@ -100,6 +110,7 @@ impl Project {
                             reason: e.message().to_string(),
                         })?;
                 soroban |= declares_soroban(&table);
+                manifests.push(Manifest { path: rel, table });
             } else if path.extension().is_some_and(|e| e == "rs") {
                 sources.push(path.to_path_buf());
             }
@@ -114,6 +125,7 @@ impl Project {
         Ok(Project {
             root: root.to_path_buf(),
             sources,
+            manifests,
         })
     }
 }

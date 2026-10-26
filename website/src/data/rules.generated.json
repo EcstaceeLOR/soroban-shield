@@ -117,18 +117,33 @@
   {
     "id": "SS-006",
     "name": "Dependency and toolchain diagnostics",
-    "status": "planned",
-    "severity": null,
-    "confidence": null,
-    "concern": "An inconsistent toolchain makes builds and checks hard to reproduce.",
-    "detection": "Planned: report missing or inconsistent project metadata when reliably detectable.",
-    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
-    "remediation": "Not applicable until the rule is implemented.",
-    "false_positives": [],
-    "false_negatives": [],
-    "references": [
-      "https://developers.stellar.org/docs/build/smart-contracts"
+    "status": "implemented",
+    "severity": "info",
+    "confidence": "high",
+    "concern": "Project metadata that makes builds hard to reproduce or that weakens arithmetic safety checks: unpinned soroban-sdk, a missing cdylib crate type, release builds without overflow checks, and a missing Cargo.lock or Rust toolchain file.",
+    "detection": "Reads each Cargo.toml (parsed with the toml crate) and checks for five conditions: (1) soroban-sdk declared as `*` or as a git dependency without rev/tag in any dependency table; (2) a [package] manifest that depends on soroban-sdk but whose [lib] crate-type lacks cdylib; (3) the root manifest not setting [profile.release] overflow-checks = true; (4) no Cargo.lock beside the root manifest; (5) no rust-toolchain.toml or rust-toolchain beside the root manifest. It makes no claim about known vulnerabilities in any dependency version, and does not consult any advisory database.",
+    "severity_rationale": "Informational: these are reproducibility and hardening hints, not vulnerabilities. Confidence is high for the file-presence and exact-value checks because they are mechanical; the overflow-checks finding is medium because the setting can also be supplied by .cargo/config.toml or environment variables that are not read.",
+    "remediation": "Pin soroban-sdk to an exact or caret version (or a git rev/tag), build contracts as `crate-type = [\"cdylib\"]`, set `overflow-checks = true` under `[profile.release]`, commit Cargo.lock, and pin the toolchain with a rust-toolchain.toml.",
+    "false_positives": [
+      "overflow-checks supplied through .cargo/config.toml or CARGO_PROFILE_RELEASE_OVERFLOW_CHECKS, which are not read.",
+      "Helper or library crates that depend on soroban-sdk but are intentionally not compiled to WASM contracts (no cdylib needed).",
+      "Toolchain pinned by CI configuration or a parent directory's rust-toolchain file, and Cargo.lock deliberately excluded."
     ],
-    "fixtures": []
+    "false_negatives": [
+      "Known-vulnerable or outdated dependency versions: no advisory data is consulted.",
+      "Inconsistent soroban-sdk versions across workspace members, or a toolchain that does not match the SDK's requirements.",
+      "Settings inherited through [workspace.package] or profile `inherits` chains are not resolved.",
+      "Profile settings in non-root manifests are ignored, which matches Cargo's behavior but can hide a mistaken member-level profile."
+    ],
+    "references": [
+      "https://doc.rust-lang.org/cargo/reference/profiles.html#overflow-checks",
+      "https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html",
+      "https://doc.rust-lang.org/cargo/faq.html#why-have-cargolock-in-version-control",
+      "https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file"
+    ],
+    "fixtures": [
+      "tests/fixtures/positive/poor_metadata",
+      "tests/fixtures/negative/good_metadata"
+    ]
   }
 ]

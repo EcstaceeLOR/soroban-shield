@@ -44,7 +44,7 @@ SS-002  [implemented] Arithmetic boundary review
 SS-003  [planned]     External contract call review
 SS-004  [planned]     Error-path review
 SS-005  [planned]     State-transition test suggestions
-SS-006  [planned]     Dependency and toolchain diagnostics
+SS-006  [implemented] Dependency and toolchain diagnostics
 ```
 
 ## `sorobanshield rules explain <RULE_ID> [--format text|json]`

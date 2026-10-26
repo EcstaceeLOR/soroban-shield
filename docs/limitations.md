@@ -7,7 +7,7 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Analysis is per file and syntactic. Macros are not expanded, types are not resolved, and there is no control-flow or cross-file analysis.
 - Only Rust source and `Cargo.toml` are examined, not compiled WASM.
 - A clean scan means only that the implemented checks reported nothing.
-- Two rules (SS-001, SS-002) are implemented. SS-003 to SS-006 are planned and do not run.
+- Three rules (SS-001, SS-002, SS-006) are implemented. SS-003 to SS-005 are planned and do not run.
 
 ## SS-001 false positives
 
@@ -35,6 +35,18 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Operations in private helpers, other files or macros.
 - Type aliases, and `i8`/`i16`/`u8`/`u16`/`usize`/`isize` parameters.
 - Division, remainder, shifts, casts of non-parameter expressions, and fixed-point rounding issues.
+
+## SS-006 false positives
+
+- `overflow-checks` set through `.cargo/config.toml` or `CARGO_PROFILE_RELEASE_OVERFLOW_CHECKS`, which are not read.
+- Helper crates that depend on `soroban-sdk` but are not contracts (no `cdylib` needed).
+- Toolchain pinned by CI or a parent directory; `Cargo.lock` deliberately omitted.
+
+## SS-006 false negatives
+
+- Vulnerable or outdated dependency versions: no advisory database is consulted, and the rule never claims a version is vulnerable.
+- Inconsistent `soroban-sdk` versions across workspace members, or a toolchain that does not match the SDK.
+- Settings inherited through `[workspace.package]` or profile `inherits` chains.
 
 ## Other
 

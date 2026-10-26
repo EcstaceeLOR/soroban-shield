@@ -1,6 +1,6 @@
 use crate::finding::Finding;
 use crate::project::{Project, ProjectError};
-use crate::rule::{relative_display, Rule, SourceUnit};
+use crate::rule::{relative_display, ManifestUnit, Rule, SourceUnit};
 use serde::Serialize;
 use std::path::Path;
 
@@ -34,6 +34,17 @@ pub fn scan_project(project: &Project, rules: &[Box<dyn Rule>]) -> ScanOutcome {
                 }
             }
             Err(message) => out.errors.push(ScanError { file: rel, message }),
+        }
+    }
+    for m in &project.manifests {
+        let unit = ManifestUnit {
+            path: &m.path,
+            table: &m.table,
+            is_root: m.path == "Cargo.toml",
+            project_root: &project.root,
+        };
+        for rule in rules {
+            out.findings.extend(rule.check_manifest(&unit));
         }
     }
     out.findings.sort_by_key(|f| f.sort_key());

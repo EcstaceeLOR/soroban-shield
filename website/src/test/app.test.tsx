@@ -63,9 +63,9 @@ describe('routes', () => {
 })
 
 describe('rule catalog data', () => {
-  it('is generated from the CLI and marks only SS-001 and SS-002 as implemented', () => {
+  it('is generated from the CLI and marks only SS-001, SS-002 and SS-006 as implemented', () => {
     const implemented = rules.filter((r) => r.status === 'implemented').map((r) => r.id)
-    expect(implemented).toEqual(['SS-001', 'SS-002'])
+    expect(implemented).toEqual(['SS-001', 'SS-002', 'SS-006'])
     for (const r of rules.filter((r) => r.status === 'planned')) {
       expect(r.severity).toBeNull()
       expect(r.confidence).toBeNull()
@@ -88,6 +88,13 @@ describe('rule catalog data', () => {
     const ss2 = within(screen.getByTestId('rule-SS-002'))
     expect(ss2.getByTestId('status-badge')).toHaveTextContent('implemented')
     expect(ss2.getByText('severity: low')).toBeInTheDocument()
+  })
+
+  it('shows SS-006 as implemented and informational, without a vulnerability claim', () => {
+    renderAt('/rules/SS-006')
+    expect(screen.getByRole('heading', { level: 1, name: 'Dependency and toolchain diagnostics' })).toBeInTheDocument()
+    expect(screen.getByText('severity: info')).toBeInTheDocument()
+    expect(screen.getByText(/does not consult any advisory database/i)).toBeInTheDocument()
   })
 
   it('filters by status and shows an empty state', async () => {

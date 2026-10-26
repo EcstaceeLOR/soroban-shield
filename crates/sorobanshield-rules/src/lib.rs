@@ -1,6 +1,7 @@
 pub mod planned;
 pub mod ss001;
 pub mod ss002;
+pub mod ss006;
 
 use sorobanshield_core::{Rule, RuleMeta};
 
@@ -9,6 +10,7 @@ pub fn active_rules() -> Vec<Box<dyn Rule>> {
     vec![
         Box::new(ss001::AuthorizationPathReview),
         Box::new(ss002::ArithmeticBoundaryReview),
+        Box::new(ss006::ToolchainDiagnostics),
     ]
 }
 

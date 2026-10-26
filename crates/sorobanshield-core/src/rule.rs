@@ -37,9 +37,27 @@ pub struct SourceUnit<'a> {
     pub ast: &'a syn::File,
 }
 
+/// A parsed `Cargo.toml` handed to rules.
+pub struct ManifestUnit<'a> {
+    /// Path relative to the scan root, `/`-separated.
+    pub path: &'a str,
+    pub table: &'a toml::Table,
+    /// True for the manifest at the scan root.
+    pub is_root: bool,
+    /// The scan root, for checking whether sibling project files exist.
+    pub project_root: &'a Path,
+}
+
 pub trait Rule: Sync {
     fn meta(&self) -> RuleMeta;
-    fn check(&self, unit: &SourceUnit<'_>) -> Vec<Finding>;
+    /// Inspect a parsed Rust source file. Defaults to no findings.
+    fn check(&self, _unit: &SourceUnit<'_>) -> Vec<Finding> {
+        Vec::new()
+    }
+    /// Inspect a parsed Cargo.toml. Defaults to no findings.
+    fn check_manifest(&self, _unit: &ManifestUnit<'_>) -> Vec<Finding> {
+        Vec::new()
+    }
 }
 
 pub fn relative_display(root: &Path, path: &Path) -> String {
