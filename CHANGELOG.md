@@ -13,6 +13,7 @@ All notable user-visible changes are recorded here. The project follows semantic
 - Rule `SS-006` (dependency and toolchain diagnostics; informational): unpinned `soroban-sdk`, missing `cdylib` crate type, release profile without `overflow-checks = true`, missing `Cargo.lock` or `rust-toolchain.toml`. Rules can now inspect parsed `Cargo.toml` files through `Rule::check_manifest`.
 - Configuration file `sorobanshield.toml` (or `--config <FILE>`): `[scan] exclude`, `[scan] fail_on`, `[rules] disable`. Strictly validated; invalid configuration exits 2. The JSON report gains `scan.config_file`, `scan.exclude` and `scan.disabled_rules` (additive; schema version stays 1).
 - `scan --format sarif`: SARIF 2.1.0 output (severity mapped to SARIF levels; failed scans reported via `invocations`).
+- Baselines: `scan --write-baseline FILE` and `scan --baseline FILE`. Entries match on rule, file and message (not line numbers). The JSON report gains `summary.suppressed_by_baseline`, `scan.baseline_file` and `scan.baseline_unmatched` (additive).
 - JSON report schema version 1.
 - Exit codes: 0 no findings at or above the threshold, 1 findings at or above it, 2 invalid usage, 3 scan could not be completed (including unparseable source files).
 - Documentation website under `website/`.

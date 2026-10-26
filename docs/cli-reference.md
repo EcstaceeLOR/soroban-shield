@@ -3,7 +3,7 @@
 ```text
 sorobanshield --help
 sorobanshield --version
-sorobanshield scan [PATH] [--format text|json|sarif] [--fail-on info|low|medium|high|critical] [--config FILE]
+sorobanshield scan [PATH] [--format text|json|sarif] [--fail-on info|low|medium|high|critical] [--config FILE] [--baseline FILE | --write-baseline FILE]
 sorobanshield rules list [--format text|json]
 sorobanshield rules explain <RULE_ID> [--format text|json]
 ```
@@ -27,7 +27,7 @@ Errors go to stderr. In JSON mode stdout contains only the JSON document when a 
 {
   "schema_version": 1,
   "tool": { "name": "sorobanshield", "version": "0.1.0" },
-  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001", "SS-002", "SS-006"], "config_file": null, "exclude": [], "disabled_rules": [], "errors": [] },
+  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001", "SS-002", "SS-006"], "config_file": null, "exclude": [], "disabled_rules": [], "baseline_file": null, "baseline_unmatched": 0, "errors": [] },
   "summary": { "total": 1, "by_severity": { "info": 0, "low": 0, "medium": 1, "high": 0, "critical": 0 } },
   "findings": [
     {
@@ -41,6 +41,19 @@ Errors go to stderr. In JSON mode stdout contains only the JSON document when a 
 ```
 
 `file` is relative to the scan root with `/` separators. `scan.errors` lists files that could not be analyzed (`{file, message}`); a non-empty list means the scan is incomplete and the exit code is 3. Output is deterministic for identical input.
+
+## Baselines
+
+A baseline lets a team adopt scanning gradually: record today's findings once, then fail only on new ones.
+
+```bash
+sorobanshield scan . --write-baseline baseline.json   # records findings; exits 0 if the scan completed
+sorobanshield scan . --baseline baseline.json         # hides recorded findings; exits 1 only for new ones
+```
+
+Each entry identifies a finding by rule ID, file and message, never by line number, so entries survive unrelated edits that move code. Two findings with the same rule, file and message share one entry. The two flags cannot be combined. A missing or invalid baseline file is a usage error (exit 2), and no baseline is written if any file could not be analyzed (exit 3).
+
+Suppression is visible: the text report prints a `baseline:` line, and the JSON report sets `summary.suppressed_by_baseline`, `scan.baseline_file` and `scan.baseline_unmatched`. A non-zero `baseline_unmatched` means some entries no longer match any finding (the issue was fixed or its message changed) and can be regenerated. Baselines hide findings; they do not mean the findings were reviewed or are safe. Commit the baseline and review changes to it like code.
 
 ## SARIF output
 

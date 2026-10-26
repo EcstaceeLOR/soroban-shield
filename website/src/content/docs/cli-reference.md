@@ -25,6 +25,8 @@ Scans a Soroban project. `PATH` defaults to `.` and must be a project root conta
 | --- | --- | --- | --- |
 | `--format` | `text`, `json`, `sarif` | `text` | Output format on stdout. SARIF is available for `scan` only. |
 | `--fail-on` | `info`, `low`, `medium`, `high`, `critical` | `low` (or `fail_on` from the config file) | Exit `1` when any finding has at least this severity. The flag overrides the config file. |
+| `--baseline` | file path | none | Hide findings recorded in a baseline file; see [Reports](/docs/reports#baselines). |
+| `--write-baseline` | file path | none | Record current findings to a baseline file; exits `0` if the scan completed. Cannot be combined with `--baseline`. |
 | `--config` | file path | `<PATH>/sorobanshield.toml` if it exists | Configuration file; see [Configuration](/docs/configuration). |
 
 Errors are written to stderr. With `--format json`, stdout contains only the JSON document.

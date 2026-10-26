@@ -19,6 +19,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | SARIF 2.1.0 output (`--format sarif`) | Implemented; sample outputs validated against the official schema (manual check) |
 | Documentation website (`website/`) | In progress, see `website/` |
 | CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
+| Baselines (`--write-baseline`, `--baseline`) | Implemented; entries match rule + file + message, not line numbers |
 | Published release / binaries / crates.io | None |
 | Independent security review | Not performed |
 
@@ -41,6 +42,8 @@ sorobanshield scan . --format json         # machine-readable report (schema v1)
 sorobanshield scan . --format sarif        # SARIF 2.1.0 for code-scanning tools
 sorobanshield scan . --fail-on medium      # only exit 1 for medium or higher findings
 sorobanshield scan . --config ci.toml      # use an explicit config file (see docs/configuration.md)
+sorobanshield scan . --write-baseline b.json   # record current findings
+sorobanshield scan . --baseline b.json         # fail only on findings not in the baseline
 sorobanshield rules list                   # all rules; planned ones are labelled
 sorobanshield rules explain SS-001         # concern, detection, limitations
 ```

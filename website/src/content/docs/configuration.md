@@ -28,6 +28,6 @@ When a config file is applied, the report says so: the text report prints a `con
 
 ## What is not configurable
 
-Output format (use `--format`), the directories skipped by default (`target`, `node_modules`, `.git`, `vendor`, `dist`, `build`), per-rule severity, and baselines/suppressions for individual findings.
+Output format (use `--format`), the directories skipped by default (`target`, `node_modules`, `.git`, `vendor`, `dist`, `build`), per-rule severity, and suppression of individual findings (see baselines in the CLI reference).
 
 There are no environment variables, and SorobanShield does not read `.env` files.

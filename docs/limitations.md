@@ -50,6 +50,6 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 
 ## Other
 
-- Configuration supports path-prefix exclusions and disabling whole rules only. There are no globs, no per-finding suppressions and no baseline support.
+- Configuration supports path-prefix exclusions and disabling whole rules only. There are no globs and no inline per-finding suppression comments. Baselines can hide recorded findings but say nothing about whether they were reviewed; a baseline entry matches on rule, file and message, so a message change (for example a renamed function) resurfaces the finding.
 - No limits on input size are enforced.
 - Tested only on Linux with Rust 1.99.

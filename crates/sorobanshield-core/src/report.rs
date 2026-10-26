@@ -25,12 +25,19 @@ pub struct ScanInfo {
     pub exclude: Vec<String>,
     /// Rules disabled by configuration.
     pub disabled_rules: Vec<String>,
+    /// Baseline file that was applied, if any.
+    pub baseline_file: Option<String>,
+    /// Baseline entries that matched no current finding.
+    pub baseline_unmatched: usize,
     pub errors: Vec<ScanError>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct Summary {
+    /// Findings reported (after baseline suppression).
     pub total: usize,
+    /// Findings hidden because they are listed in the baseline.
+    pub suppressed_by_baseline: usize,
     pub by_severity: BTreeMap<String, usize>,
 }
 
@@ -64,10 +71,13 @@ impl Report {
                 config_file: None,
                 exclude: Vec::new(),
                 disabled_rules: Vec::new(),
+                baseline_file: None,
+                baseline_unmatched: 0,
                 errors: outcome.errors,
             },
             summary: Summary {
                 total: outcome.findings.len(),
+                suppressed_by_baseline: 0,
                 by_severity,
             },
             findings: outcome.findings,
@@ -197,6 +207,13 @@ impl Report {
                 "config: {c} ({} excluded path(s), {} rule(s) disabled)",
                 self.scan.exclude.len(),
                 self.scan.disabled_rules.len()
+            );
+        }
+        if let Some(b) = &self.scan.baseline_file {
+            let _ = writeln!(
+                s,
+                "baseline: {b} ({} finding(s) suppressed, {} stale entr(ies))",
+                self.summary.suppressed_by_baseline, self.scan.baseline_unmatched
             );
         }
         for e in &self.scan.errors {

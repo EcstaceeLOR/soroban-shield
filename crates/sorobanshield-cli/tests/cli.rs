@@ -429,3 +429,164 @@ fn sarif_reports_failed_scans_as_unsuccessful() {
 fn rules_commands_do_not_accept_sarif() {
     assert_eq!(code(&run(&["rules", "list", "--format", "sarif"])), 2);
 }
+
+fn temp_dir(name: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("ss-{name}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    d
+}
+
+fn copy_dir(from: &std::path::Path, to: &std::path::Path) {
+    std::fs::create_dir_all(to).unwrap();
+    for e in std::fs::read_dir(from).unwrap() {
+        let e = e.unwrap();
+        let dest = to.join(e.file_name());
+        if e.file_type().unwrap().is_dir() {
+            copy_dir(&e.path(), &dest);
+        } else {
+            std::fs::copy(e.path(), dest).unwrap();
+        }
+    }
+}
+
+#[test]
+fn baseline_write_then_apply_suppresses_known_findings() {
+    let d = temp_dir("baseline-basic");
+    let base = d.join("baseline.json");
+    let w = scan(
+        "positive/unprotected_write",
+        &["--write-baseline", base.to_str().unwrap()],
+    );
+    assert_eq!(
+        code(&w),
+        0,
+        "writing a baseline succeeds when the scan completes"
+    );
+    assert!(err(&w).contains("wrote baseline with 1 entr"));
+    let b: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&base).unwrap()).unwrap();
+    assert_eq!(b["schema_version"], 1);
+    assert_eq!(b["fingerprints"].as_array().unwrap().len(), 1);
+
+    let o = scan(
+        "positive/unprotected_write",
+        &["--baseline", base.to_str().unwrap(), "--format", "json"],
+    );
+    assert_eq!(code(&o), 0);
+    let v = json(&o);
+    assert_eq!(v["summary"]["total"], 0);
+    assert_eq!(v["summary"]["suppressed_by_baseline"], 1);
+    assert_eq!(v["scan"]["baseline_unmatched"], 0);
+    assert!(v["scan"]["baseline_file"]
+        .as_str()
+        .unwrap()
+        .ends_with("baseline.json"));
+    let t = out(&scan(
+        "positive/unprotected_write",
+        &["--baseline", base.to_str().unwrap()],
+    ));
+    assert!(t.contains("1 finding(s) suppressed, 0 stale"), "{t}");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn baseline_survives_line_shifts_but_not_new_findings() {
+    let d = temp_dir("baseline-shift");
+    let proj = d.join("proj");
+    copy_dir(&fixture("positive/unprotected_write"), &proj);
+    let base = d.join("baseline.json");
+    let run_scan = |extra: &[&str]| {
+        let mut a = vec!["scan", proj.to_str().unwrap(), "--format", "json"];
+        a.extend_from_slice(extra);
+        run(&a)
+    };
+    assert_eq!(
+        code(&run_scan(&["--write-baseline", base.to_str().unwrap()])),
+        0
+    );
+
+    let lib = proj.join("src/lib.rs");
+    let original = std::fs::read_to_string(&lib).unwrap();
+    std::fs::write(&lib, format!("\n\n\n// moved down\n{original}")).unwrap();
+    let moved = run_scan(&["--baseline", base.to_str().unwrap()]);
+    assert_eq!(
+        code(&moved),
+        0,
+        "same finding on a new line is still suppressed"
+    );
+    assert_eq!(json(&moved)["summary"]["suppressed_by_baseline"], 1);
+
+    std::fs::write(
+        &lib,
+        format!("{original}\n#[contractimpl]\nimpl Counter {{\n    pub fn reset(env: Env) {{\n        env.storage().instance().remove(&symbol_short!(\"VALUE\"));\n    }}\n}}\n"),
+    )
+    .unwrap();
+    let fresh = run_scan(&["--baseline", base.to_str().unwrap()]);
+    assert_eq!(code(&fresh), 1, "a new finding is not hidden");
+    let v = json(&fresh);
+    assert_eq!(v["summary"]["total"], 1);
+    assert_eq!(v["summary"]["suppressed_by_baseline"], 1);
+    assert!(v["findings"][0]["message"]
+        .as_str()
+        .unwrap()
+        .contains("`reset`"));
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn baseline_reports_stale_entries() {
+    let d = temp_dir("baseline-stale");
+    let base = d.join("baseline.json");
+    assert_eq!(
+        code(&scan(
+            "positive/unprotected_write",
+            &["--write-baseline", base.to_str().unwrap()]
+        )),
+        0
+    );
+    let o = scan(
+        "negative/good_metadata",
+        &["--baseline", base.to_str().unwrap(), "--format", "json"],
+    );
+    assert_eq!(code(&o), 0);
+    assert_eq!(json(&o)["scan"]["baseline_unmatched"], 1);
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn baseline_errors_are_usage_errors_and_never_clean() {
+    let d = temp_dir("baseline-bad");
+    let bad = d.join("bad.json");
+    std::fs::write(&bad, "{ nope").unwrap();
+    for path in [bad.to_str().unwrap(), "/no/such/baseline.json"] {
+        let o = scan("positive/unprotected_write", &["--baseline", path]);
+        assert_eq!(code(&o), 2, "{path}");
+        assert!(out(&o).is_empty());
+    }
+    let both = scan(
+        "positive/unprotected_write",
+        &[
+            "--baseline",
+            bad.to_str().unwrap(),
+            "--write-baseline",
+            d.join("x.json").to_str().unwrap(),
+        ],
+    );
+    assert_eq!(code(&both), 2);
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn incomplete_scan_does_not_write_a_baseline() {
+    let d = temp_dir("baseline-incomplete");
+    let base = d.join("baseline.json");
+    let o = scan(
+        "invalid/malformed_source",
+        &["--write-baseline", base.to_str().unwrap()],
+    );
+    assert_eq!(code(&o), 3);
+    assert!(!base.exists());
+    assert!(err(&o).contains("no baseline was written"));
+    let _ = std::fs::remove_dir_all(&d);
+}

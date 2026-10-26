@@ -5,6 +5,7 @@ const implemented = [
   ['CLI scanning', 'sorobanshield scan [PATH] with project discovery and validation.'],
   ['Syntax-aware analysis', 'Rust files are parsed with syn; project code is never compiled or executed.'],
   ['Rule SS-001', 'Authorization path review for public contract functions that write storage.'],
+  ['Baselines', 'scan --write-baseline / --baseline hide recorded findings so teams can fail only on new ones; suppression is always shown in the report.'],
   ['SARIF output', 'scan --format sarif writes SARIF 2.1.0 for code-scanning tools.'],
   ['Configuration file', 'sorobanshield.toml: exclude path prefixes, disable rules, set fail_on. Unknown keys and rule IDs are errors.'],
   ['Rule SS-006', 'Informational dependency and toolchain diagnostics read from Cargo.toml and project files.'],
@@ -17,8 +18,7 @@ const implemented = [
 
 const planned = [
   'Rules SS-003 to SS-005 (external calls, error paths, test suggestions)',
-  'Per-finding suppressions, baselines and glob-based exclusions',
-  'Baseline support for introducing scanning gradually',
+  'Inline suppression comments and glob-based exclusions',
   'Multi-contract / workspace reporting',
   'Published releases and prebuilt binaries',
 ]

@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use sorobanshield_core::{discover_and_scan, Config, Report, RuleMeta, Severity};
+use sorobanshield_core::{discover_and_scan, Baseline, Config, Report, RuleMeta, Severity};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -50,6 +50,12 @@ enum Command {
         /// Configuration file. Defaults to <PATH>/sorobanshield.toml when that file exists
         #[arg(long)]
         config: Option<PathBuf>,
+        /// Hide findings listed in this baseline file (created with --write-baseline)
+        #[arg(long, conflicts_with = "write_baseline")]
+        baseline: Option<PathBuf>,
+        /// Write the current findings to this baseline file and exit 0 if the scan completed
+        #[arg(long)]
+        write_baseline: Option<PathBuf>,
     },
     /// Inspect the rule catalog
     Rules {
@@ -85,7 +91,16 @@ fn main() -> ExitCode {
             format,
             fail_on,
             config,
-        } => scan(path, format, fail_on, config),
+            baseline,
+            write_baseline,
+        } => scan(ScanArgs {
+            path,
+            format,
+            fail_on,
+            config,
+            baseline,
+            write_baseline,
+        }),
         Command::Rules {
             action: RulesCommand::List { format },
         } => list(format),
@@ -95,12 +110,24 @@ fn main() -> ExitCode {
     })
 }
 
-fn scan(
+struct ScanArgs {
     path: PathBuf,
     format: ScanFormat,
     fail_on: Option<Severity>,
     config: Option<PathBuf>,
-) -> u8 {
+    baseline: Option<PathBuf>,
+    write_baseline: Option<PathBuf>,
+}
+
+fn scan(args: ScanArgs) -> u8 {
+    let ScanArgs {
+        path,
+        format,
+        fail_on,
+        config,
+        baseline,
+        write_baseline,
+    } = args;
     let runnable: Vec<String> = sorobanshield_rules::active_rules()
         .iter()
         .map(|r| r.meta().id)
@@ -117,18 +144,34 @@ fn scan(
         eprintln!("error: {e}");
         return EXIT_USAGE;
     }
+    let loaded_baseline = match baseline.as_deref().map(Baseline::load).transpose() {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return EXIT_USAGE;
+        }
+    };
 
     let rules: Vec<_> = sorobanshield_rules::active_rules()
         .into_iter()
         .filter(|r| !cfg.rules.disable.contains(&r.meta().id))
         .collect();
-    let (_project, outcome) = match discover_and_scan(&path, &cfg.scan.exclude, &rules) {
+    let (_project, mut outcome) = match discover_and_scan(&path, &cfg.scan.exclude, &rules) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("error: {e}");
             return EXIT_FAILURE;
         }
     };
+
+    let (mut suppressed, mut unmatched) = (0, 0);
+    if let Some(b) = &loaded_baseline {
+        let applied = b.apply(std::mem::take(&mut outcome.findings));
+        outcome.findings = applied.kept;
+        suppressed = applied.suppressed;
+        unmatched = applied.unmatched;
+    }
+
     let ids = rules.iter().map(|r| r.meta().id).collect();
     let mut report = Report::new(
         env!("CARGO_PKG_VERSION"),
@@ -139,6 +182,9 @@ fn scan(
     report.scan.config_file = config_shown;
     report.scan.exclude = cfg.scan.exclude.clone();
     report.scan.disabled_rules = cfg.rules.disable.clone();
+    report.scan.baseline_file = baseline.as_ref().map(|b| b.display().to_string());
+    report.scan.baseline_unmatched = unmatched;
+    report.summary.suppressed_by_baseline = suppressed;
 
     match format {
         ScanFormat::Json => println!("{}", report.to_json()),
@@ -148,14 +194,37 @@ fn scan(
             println!("{}", report.to_sarif(&metas));
         }
     }
-    let threshold = fail_on.or(cfg.scan.fail_on).unwrap_or(Severity::Low);
     if report.has_errors() {
         eprintln!(
-            "error: {} file(s) could not be analyzed; the scan is incomplete",
-            report.scan.errors.len()
+            "error: {} file(s) could not be analyzed; the scan is incomplete{}",
+            report.scan.errors.len(),
+            if write_baseline.is_some() {
+                ", so no baseline was written"
+            } else {
+                ""
+            }
         );
-        EXIT_FAILURE
-    } else if report.exceeds(threshold) {
+        return EXIT_FAILURE;
+    }
+    if let Some(target) = write_baseline {
+        let b = Baseline::from_findings(&report.findings);
+        return match b.save(&target) {
+            Ok(()) => {
+                eprintln!(
+                    "wrote baseline with {} entr(ies) to {}",
+                    b.fingerprints.len(),
+                    target.display()
+                );
+                EXIT_OK
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                EXIT_FAILURE
+            }
+        };
+    }
+    let threshold = fail_on.or(cfg.scan.fail_on).unwrap_or(Severity::Low);
+    if report.exceeds(threshold) {
         EXIT_FINDINGS
     } else {
         EXIT_OK
