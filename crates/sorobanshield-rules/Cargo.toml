@@ -1,0 +1,12 @@
+[package]
+name = "sorobanshield-rules"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+sorobanshield-core = { path = "../sorobanshield-core" }
+syn.workspace = true
+proc-macro2.workspace = true

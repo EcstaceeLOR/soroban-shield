@@ -1,0 +1,119 @@
+[
+  {
+    "id": "SS-001",
+    "name": "Authorization path review",
+    "status": "implemented",
+    "severity": "medium",
+    "confidence": "low",
+    "concern": "A public contract function writes to contract storage, but no require_auth call is visible in the function or in a same-file helper it calls. Authorization may be missing, or it may be enforced somewhere this rule cannot see.",
+    "detection": "Parses each Rust file with syn. In impl blocks annotated #[contractimpl], for each public function it looks for storage writes (a .set(..) or .remove(..) call whose receiver chain contains .storage()) and for require_auth / require_auth_for_args calls. A function is reported when it writes storage, contains no such auth call, and calls no same-file function that does. Items under #[cfg(test)] are skipped.",
+    "severity_rationale": "Medium: missing authorization on a storage write can be serious, but this rule only establishes that no auth call is visible, not that authorization is absent. Confidence is low for the same reason, so the finding is a prompt for manual review, not a vulnerability claim.",
+    "remediation": "Trace every caller of the function. If the write must be restricted, call require_auth() on the relevant Address before it, and add tests for authorized and unauthorized callers. If authorization is enforced elsewhere (for example the function is only reachable through an authorized entrypoint), document that and treat the finding as reviewed.",
+    "false_positives": [
+      "Public initialization functions that are intentionally callable once by anyone.",
+      "Authorization performed in a helper defined in another file or crate, in a caller, or via a trait method.",
+      "Writes to temporary storage that carry no security meaning."
+    ],
+    "false_negatives": [
+      "A require_auth call exists but is on the wrong Address, or is conditional and skipped on some paths.",
+      "Storage writes hidden behind macros, helper functions in other files, or non-set/remove APIs (for example extend_ttl or bump).",
+      "Functions not marked pub or not inside #[contractimpl], and contract code that is generated rather than written.",
+      "Any call named require_auth on an unrelated type is counted as authorization."
+    ],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts/example-contracts/auth",
+      "https://docs.rs/soroban-sdk/latest/soroban_sdk/struct.Address.html#method.require_auth"
+    ],
+    "fixtures": [
+      "tests/fixtures/positive/unprotected_write",
+      "tests/fixtures/negative/protected_write",
+      "tests/fixtures/negative/helper_auth",
+      "tests/fixtures/edge/test_module_ignored"
+    ]
+  },
+  {
+    "id": "SS-002",
+    "name": "Arithmetic boundary review",
+    "status": "planned",
+    "severity": null,
+    "confidence": null,
+    "concern": "Amounts, counters and conversions can fail at integer boundaries or round unexpectedly.",
+    "detection": "Planned: syntax-aware review prompts for selected unchecked arithmetic and narrowing conversions.",
+    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
+    "remediation": "Not applicable until the rule is implemented.",
+    "false_positives": [],
+    "false_negatives": [],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts"
+    ],
+    "fixtures": []
+  },
+  {
+    "id": "SS-003",
+    "name": "External contract call review",
+    "status": "planned",
+    "severity": null,
+    "confidence": null,
+    "concern": "Cross-contract and token calls have authorization and state-ordering implications.",
+    "detection": "Planned: locate selected external calls and prompt review where result handling is unclear.",
+    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
+    "remediation": "Not applicable until the rule is implemented.",
+    "false_positives": [],
+    "false_negatives": [],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts"
+    ],
+    "fixtures": []
+  },
+  {
+    "id": "SS-004",
+    "name": "Error-path review",
+    "status": "planned",
+    "severity": null,
+    "confidence": null,
+    "concern": "Inconsistent error handling can leave unexpected state changes in place.",
+    "detection": "Planned: a narrowly defined set of suspicious error-handling patterns.",
+    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
+    "remediation": "Not applicable until the rule is implemented.",
+    "false_positives": [],
+    "false_negatives": [],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts"
+    ],
+    "fixtures": []
+  },
+  {
+    "id": "SS-005",
+    "name": "State-transition test suggestions",
+    "status": "planned",
+    "severity": null,
+    "confidence": null,
+    "concern": "Individually correct functions can combine into incorrect state transitions.",
+    "detection": "Planned: test suggestions for selected stateful patterns, clearly marked as suggestions.",
+    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
+    "remediation": "Not applicable until the rule is implemented.",
+    "false_positives": [],
+    "false_negatives": [],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts"
+    ],
+    "fixtures": []
+  },
+  {
+    "id": "SS-006",
+    "name": "Dependency and toolchain diagnostics",
+    "status": "planned",
+    "severity": null,
+    "confidence": null,
+    "concern": "An inconsistent toolchain makes builds and checks hard to reproduce.",
+    "detection": "Planned: report missing or inconsistent project metadata when reliably detectable.",
+    "severity_rationale": "Not assigned: this rule is not implemented and the scanner does not run it.",
+    "remediation": "Not applicable until the rule is implemented.",
+    "false_positives": [],
+    "false_negatives": [],
+    "references": [
+      "https://developers.stellar.org/docs/build/smart-contracts"
+    ],
+    "fixtures": []
+  }
+]

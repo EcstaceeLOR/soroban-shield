@@ -1,0 +1,38 @@
+import { Page } from '../components/Page'
+
+type State = 'done' | 'in progress' | 'planned'
+const items: { title: string; state: State; note: string }[] = [
+  { title: 'CLI foundation', state: 'done', note: 'Project discovery and validation, finding model, text reporter, help and version.' },
+  { title: 'First tested rule (SS-001)', state: 'done', note: 'Syntax-aware authorization path review with positive, negative and edge fixtures.' },
+  { title: 'JSON report and exit codes', state: 'done', note: 'Versioned JSON schema, --fail-on threshold, exit codes 0 to 3, integration tests.' },
+  { title: 'Documentation website', state: 'in progress', note: 'Initial version: landing page, docs, generated rule catalog.' },
+  { title: 'CI workflow', state: 'in progress', note: 'No workflow has been verified yet; CI documentation is marked untested.' },
+  { title: 'Configuration file', state: 'planned', note: 'Not implemented. Only command-line flags exist today.' },
+  { title: 'SARIF output', state: 'planned', note: 'Not implemented.' },
+  { title: 'Additional rules SS-002 to SS-006', state: 'planned', note: 'Each will ship only with fixtures, tests and documented limitations.' },
+  { title: 'First tagged release', state: 'planned', note: 'No release has been published. Build from source.' },
+  { title: 'Independent security review', state: 'planned', note: 'Not performed.' },
+]
+const style: Record<State, string> = {
+  done: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300',
+  'in progress': 'border-amber-500/50 bg-amber-500/10 text-amber-300',
+  planned: 'border-slate-500/60 bg-slate-500/10 text-slate-300',
+}
+
+export default function Roadmap() {
+  return (
+    <Page title="Roadmap" lead="Status of each milestone. Nothing is marked done without code and tests behind it.">
+      <ul className="space-y-3">
+        {items.map((i) => (
+          <li key={i.title} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${style[i.state]}`}>{i.state}</span>
+              <h2 className="font-semibold text-white">{i.title}</h2>
+            </div>
+            <p className="mt-1 text-sm">{i.note}</p>
+          </li>
+        ))}
+      </ul>
+    </Page>
+  )
+}

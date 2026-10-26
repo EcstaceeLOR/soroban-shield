@@ -1,0 +1,21 @@
+[package]
+name = "sorobanshield"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Security review toolkit for Soroban smart contracts"
+
+[[bin]]
+name = "sorobanshield"
+path = "src/main.rs"
+
+[dependencies]
+sorobanshield-core = { path = "../sorobanshield-core" }
+sorobanshield-rules = { path = "../sorobanshield-rules" }
+clap.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

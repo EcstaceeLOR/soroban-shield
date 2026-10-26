@@ -1,0 +1,14 @@
+# Changelog
+
+All notable user-visible changes are recorded here. The project follows semantic versioning once a release is published. No release has been published yet.
+
+## Unreleased
+
+### Added
+- `sorobanshield scan [PATH]` with `--format text|json` and `--fail-on <severity>`.
+- `sorobanshield rules list` and `sorobanshield rules explain <ID>`, each with `--format json`.
+- Project discovery: requires a `Cargo.toml`, requires a `soroban-sdk` dependency in some manifest, skips `target`, `node_modules`, `.git`, `vendor`, `dist` and `build`.
+- Rule `SS-001` (authorization path review, experimental-quality heuristic, medium severity / low confidence).
+- JSON report schema version 1.
+- Exit codes: 0 no findings at or above the threshold, 1 findings at or above it, 2 invalid usage, 3 scan could not be completed (including unparseable source files).
+- Documentation website under `website/`.

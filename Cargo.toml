@@ -1,0 +1,25 @@
+[workspace]
+members = [
+    "crates/sorobanshield-cli",
+    "crates/sorobanshield-core",
+    "crates/sorobanshield-rules",
+]
+exclude = ["tests/fixtures"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["SorobanShield Contributors"]
+license = "MIT"
+repository = "https://github.com/sorobanshield/soroban-shield"
+
+[workspace.dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+walkdir = "2"
+toml = "0.8"
+syn = { version = "2", features = ["full", "visit"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }
+thiserror = "1"
