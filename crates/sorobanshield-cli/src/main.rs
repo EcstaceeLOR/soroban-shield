@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use sorobanshield_core::{discover_and_scan, Report, RuleMeta, Severity};
+use sorobanshield_core::{discover_and_scan, Config, Report, RuleMeta, Severity};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -13,7 +13,7 @@ const EXIT_FAILURE: u8 = 3;
     name = "sorobanshield",
     version,
     about = "Security review toolkit for Soroban smart contracts",
-    after_help = "Exit codes: 0 no findings at or above --fail-on; 1 findings at or above --fail-on; 2 invalid usage; 3 scan could not be completed.\nStatic analysis cannot prove a contract is secure."
+    after_help = "Exit codes: 0 no findings at or above --fail-on; 1 findings at or above --fail-on; 2 invalid usage or configuration; 3 scan could not be completed.\nStatic analysis cannot prove a contract is secure."
 )]
 struct Cli {
     #[command(subcommand)]
@@ -35,9 +35,13 @@ enum Command {
         path: PathBuf,
         #[arg(long, value_enum, default_value = "text")]
         format: Format,
-        /// Exit with code 1 when a finding has at least this severity (info, low, medium, high, critical)
-        #[arg(long, default_value = "low", value_parser = parse_severity)]
-        fail_on: Severity,
+        /// Exit with code 1 when a finding has at least this severity (info, low, medium, high, critical).
+        /// Overrides the config file; defaults to low.
+        #[arg(long, value_parser = parse_severity)]
+        fail_on: Option<Severity>,
+        /// Configuration file. Defaults to <PATH>/sorobanshield.toml when that file exists
+        #[arg(long)]
+        config: Option<PathBuf>,
     },
     /// Inspect the rule catalog
     Rules {
@@ -72,7 +76,8 @@ fn main() -> ExitCode {
             path,
             format,
             fail_on,
-        } => scan(path, format, fail_on),
+            config,
+        } => scan(path, format, fail_on, config),
         Command::Rules {
             action: RulesCommand::List { format },
         } => list(format),
@@ -82,9 +87,29 @@ fn main() -> ExitCode {
     })
 }
 
-fn scan(path: PathBuf, format: Format, fail_on: Severity) -> u8 {
-    let rules = sorobanshield_rules::active_rules();
-    let (_project, outcome) = match discover_and_scan(&path, &rules) {
+fn scan(path: PathBuf, format: Format, fail_on: Option<Severity>, config: Option<PathBuf>) -> u8 {
+    let runnable: Vec<String> = sorobanshield_rules::active_rules()
+        .iter()
+        .map(|r| r.meta().id)
+        .collect();
+
+    let (mut cfg, config_shown) = match load_config(&path, config) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return EXIT_USAGE;
+        }
+    };
+    if let Err(e) = cfg.validate_rules(&runnable) {
+        eprintln!("error: {e}");
+        return EXIT_USAGE;
+    }
+
+    let rules: Vec<_> = sorobanshield_rules::active_rules()
+        .into_iter()
+        .filter(|r| !cfg.rules.disable.contains(&r.meta().id))
+        .collect();
+    let (_project, outcome) = match discover_and_scan(&path, &cfg.scan.exclude, &rules) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("error: {e}");
@@ -92,27 +117,58 @@ fn scan(path: PathBuf, format: Format, fail_on: Severity) -> u8 {
         }
     };
     let ids = rules.iter().map(|r| r.meta().id).collect();
-    let report = Report::new(
+    let mut report = Report::new(
         env!("CARGO_PKG_VERSION"),
         &path.display().to_string(),
         ids,
         outcome,
     );
+    report.scan.config_file = config_shown;
+    report.scan.exclude = cfg.scan.exclude.clone();
+    report.scan.disabled_rules = cfg.rules.disable.clone();
+
     match format {
         Format::Json => println!("{}", report.to_json()),
         Format::Text => print!("{}", report.to_terminal()),
     }
+    let threshold = fail_on.or(cfg.scan.fail_on).unwrap_or(Severity::Low);
     if report.has_errors() {
         eprintln!(
             "error: {} file(s) could not be analyzed; the scan is incomplete",
             report.scan.errors.len()
         );
         EXIT_FAILURE
-    } else if report.exceeds(fail_on) {
+    } else if report.exceeds(threshold) {
         EXIT_FINDINGS
     } else {
         EXIT_OK
     }
+}
+
+/// Loads the explicit `--config` file, or `<root>/sorobanshield.toml` if present.
+fn load_config(
+    root: &std::path::Path,
+    explicit: Option<PathBuf>,
+) -> Result<(Config, Option<String>), String> {
+    let (file, shown) = match explicit {
+        Some(f) => {
+            if !f.is_file() {
+                return Err(format!("config file not found: {}", f.display()));
+            }
+            let shown = f.display().to_string();
+            (f, shown)
+        }
+        None => {
+            let f = root.join("sorobanshield.toml");
+            if !f.is_file() {
+                return Ok((Config::default(), None));
+            }
+            (f, "sorobanshield.toml".to_string())
+        }
+    };
+    Config::load(&file)
+        .map(|c| (c, Some(shown)))
+        .map_err(|e| e.to_string())
 }
 
 fn list(format: Format) -> u8 {

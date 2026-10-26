@@ -29,6 +29,9 @@ Run `sorobanshield scan . --format json`. Key order is fixed and the output is d
 | `scan.root` | string | The path you passed. |
 | `scan.files_scanned` | number | Files parsed successfully. |
 | `scan.rules_run` | string[] | IDs of rules that ran. |
+| `scan.config_file` | string or null | Config file that was applied, if any. |
+| `scan.exclude` | string[] | Path prefixes excluded by configuration. |
+| `scan.disabled_rules` | string[] | Rules disabled by configuration. |
 | `scan.errors` | object[] | `{ file, message }` for files that could not be read or parsed. |
 | `summary.total` | number | Number of findings. |
 | `summary.by_severity` | object | Counts for `critical`, `high`, `info`, `low`, `medium`. |
@@ -41,7 +44,7 @@ Each finding has `rule_id`, `title`, `severity`, `confidence`, `message`, `file`
 {
   "schema_version": 1,
   "tool": { "name": "sorobanshield", "version": "0.1.0" },
-  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001", "SS-002", "SS-006"], "errors": [] },
+  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001", "SS-002", "SS-006"], "config_file": null, "exclude": [], "disabled_rules": [], "errors": [] },
   "summary": { "total": 0, "by_severity": { "critical": 0, "high": 0, "info": 0, "low": 0, "medium": 0 } },
   "findings": [],
   "disclaimer": "Static analysis cannot prove a contract is secure. ..."

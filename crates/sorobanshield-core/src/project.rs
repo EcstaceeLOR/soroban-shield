@@ -63,6 +63,11 @@ fn skipped(name: &str) -> bool {
 
 impl Project {
     pub fn discover(root: &Path) -> Result<Project, ProjectError> {
+        Project::discover_with(root, &[])
+    }
+
+    /// `exclude` holds normalized project-relative path prefixes to skip.
+    pub fn discover_with(root: &Path, exclude: &[String]) -> Result<Project, ProjectError> {
         let shown = root.display().to_string();
         if !root.exists() {
             return Err(ProjectError::NotFound(shown));
@@ -82,8 +87,16 @@ impl Project {
             .sort_by_file_name()
             .into_iter()
             .filter_entry(|e| {
-                e.depth() == 0
-                    || !(e.file_type().is_dir() && skipped(&e.file_name().to_string_lossy()))
+                if e.depth() == 0 {
+                    return true;
+                }
+                if e.file_type().is_dir() && skipped(&e.file_name().to_string_lossy()) {
+                    return false;
+                }
+                let rel = relative_display(root, e.path());
+                !exclude
+                    .iter()
+                    .any(|x| rel == *x || rel.starts_with(&format!("{x}/")))
             });
         for entry in walker {
             let entry = entry.map_err(|e| ProjectError::Unreadable {
@@ -216,5 +229,37 @@ mod tests {
         write(d.path(), "c/Cargo.toml", MANIFEST);
         write(d.path(), "c/src/lib.rs", "");
         assert!(Project::discover(d.path()).is_ok());
+    }
+}
+
+#[cfg(test)]
+mod exclude_tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn exclude_prunes_directories_files_and_manifests() {
+        let d = tempfile::tempdir().unwrap();
+        let w = |rel: &str, text: &str| {
+            let p = d.path().join(rel);
+            fs::create_dir_all(p.parent().unwrap()).unwrap();
+            fs::write(p, text).unwrap();
+        };
+        w(
+            "Cargo.toml",
+            "[package]\nname=\"c\"\nversion=\"0.1.0\"\n[dependencies]\nsoroban-sdk=\"22\"\n",
+        );
+        w("src/lib.rs", "");
+        w("gen/a.rs", "");
+        w("gen/deep/b.rs", "");
+        w("src/skip.rs", "");
+        w("generated/c.rs", "");
+        let p = Project::discover_with(d.path(), &["gen".into(), "src/skip.rs".into()]).unwrap();
+        let rels: Vec<String> = p
+            .sources
+            .iter()
+            .map(|s| relative_display(d.path(), s))
+            .collect();
+        assert_eq!(rels, vec!["generated/c.rs", "src/lib.rs"]);
     }
 }

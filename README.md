@@ -15,7 +15,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Rule `SS-002` arithmetic boundary review | Implemented (heuristic, low severity / low confidence) |
 | Rule `SS-006` dependency and toolchain diagnostics | Implemented (informational, reads `Cargo.toml` and project files only) |
 | Rules `SS-003` to `SS-005` | Planned, not run by the scanner |
-| Configuration file | Not implemented |
+| Configuration file (`sorobanshield.toml`: exclude paths, disable rules, `fail_on`) | Implemented, strictly validated |
 | SARIF output | Not implemented |
 | Documentation website (`website/`) | In progress, see `website/` |
 | CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
@@ -39,11 +39,12 @@ cargo build --release
 sorobanshield scan .                       # human-readable report
 sorobanshield scan . --format json         # machine-readable report (schema v1)
 sorobanshield scan . --fail-on medium      # only exit 1 for medium or higher findings
+sorobanshield scan . --config ci.toml      # use an explicit config file (see docs/configuration.md)
 sorobanshield rules list                   # all rules; planned ones are labelled
 sorobanshield rules explain SS-001         # concern, detection, limitations
 ```
 
-Exit codes: `0` no findings at or above `--fail-on` (default `low`); `1` findings at or above it; `2` invalid usage or unknown rule; `3` the scan could not be completed (bad path, missing or malformed `Cargo.toml`, not a Soroban project, or a source file that could not be read or parsed). A failed scan never exits `0`.
+Exit codes: `0` no findings at or above `--fail-on` (default `low`); `1` findings at or above it; `2` invalid usage, invalid configuration or unknown rule; `3` the scan could not be completed (bad path, missing or malformed `Cargo.toml`, not a Soroban project, or a source file that could not be read or parsed). A failed scan never exits `0`.
 
 Try it on a bundled fixture:
 

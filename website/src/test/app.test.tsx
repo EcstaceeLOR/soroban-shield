@@ -170,9 +170,10 @@ describe('landing page honesty', () => {
 })
 
 describe('documentation pages', () => {
-  it('states that no configuration file exists yet', () => {
+  it('documents the supported configuration file and its strict validation', () => {
     renderAt('/docs/configuration')
-    expect(screen.getByText(/does not support a configuration file yet/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/sorobanshield\.toml/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Unknown keys and sections are rejected/i)).toBeInTheDocument()
   })
 
   it('documents all four exit codes in the CLI reference', () => {
@@ -257,7 +258,7 @@ describe('roadmap honesty', () => {
     renderAt('/roadmap')
     const item = (title: string) => screen.getByRole('heading', { name: title }).closest('li')!
     expect(within(item('SARIF output')).getByText('planned')).toBeInTheDocument()
-    expect(within(item('Configuration file')).getByText('planned')).toBeInTheDocument()
+    expect(within(item('Configuration file')).getByText('done')).toBeInTheDocument()
     expect(within(item('First tagged release')).getByText('planned')).toBeInTheDocument()
     expect(within(item('JSON report and exit codes')).getByText('done')).toBeInTheDocument()
   })

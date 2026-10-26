@@ -50,6 +50,6 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 
 ## Other
 
-- No configuration file or rule exclusions yet; there is no baseline support.
+- Configuration supports path-prefix exclusions and disabling whole rules only. There are no globs, no per-finding suppressions and no baseline support.
 - No limits on input size are enforced.
 - Tested only on Linux with Rust 1.99.

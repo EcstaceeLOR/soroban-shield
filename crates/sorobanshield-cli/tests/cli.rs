@@ -259,3 +259,110 @@ fn ss006_terminal_output_has_no_line_suffix() {
     assert!(t.contains("at Cargo.toml\n"), "{t}");
     assert!(t.contains("severity: info"));
 }
+
+fn json(o: &Output) -> serde_json::Value {
+    serde_json::from_str(&out(o)).expect("stdout is pure JSON")
+}
+
+#[test]
+fn config_can_disable_a_rule_and_report_says_so() {
+    let o = scan("config/disable_rule", &["--format", "json"]);
+    assert_eq!(code(&o), 0);
+    let v = json(&o);
+    assert_eq!(
+        v["scan"]["rules_run"],
+        serde_json::json!(["SS-002", "SS-006"])
+    );
+    assert_eq!(v["scan"]["disabled_rules"], serde_json::json!(["SS-001"]));
+    assert_eq!(v["scan"]["config_file"], "sorobanshield.toml");
+    assert_eq!(v["summary"]["total"], 0);
+}
+
+#[test]
+fn config_exclude_skips_paths_and_is_visible() {
+    let o = scan("config/exclude_path", &["--format", "json"]);
+    assert_eq!(code(&o), 0);
+    let v = json(&o);
+    assert_eq!(v["scan"]["files_scanned"], 1);
+    assert_eq!(v["scan"]["exclude"], serde_json::json!(["generated"]));
+
+    let empty = fixture("config/files/empty.toml");
+    let o = scan(
+        "config/exclude_path",
+        &["--config", empty.to_str().unwrap(), "--format", "json"],
+    );
+    assert_eq!(
+        code(&o),
+        1,
+        "without the exclusion the generated file is scanned"
+    );
+    let v = json(&o);
+    assert_eq!(v["scan"]["files_scanned"], 2);
+    assert_eq!(v["findings"][0]["file"], "generated/bad.rs");
+}
+
+#[test]
+fn config_fail_on_applies_and_cli_flag_overrides_it() {
+    assert_eq!(code(&scan("config/fail_on_high", &[])), 0);
+    assert_eq!(code(&scan("config/fail_on_high", &["--fail-on", "low"])), 1);
+}
+
+#[test]
+fn terminal_output_mentions_the_applied_config() {
+    let t = out(&scan("config/exclude_path", &[]));
+    assert!(
+        t.contains("config: sorobanshield.toml (1 excluded path(s), 0 rule(s) disabled)"),
+        "{t}"
+    );
+}
+
+#[test]
+fn invalid_configuration_is_a_usage_error_and_never_a_clean_scan() {
+    let cases = [
+        ("unknown_key.toml", "unknown field"),
+        ("bad_severity.toml", "invalid config file"),
+        ("unknown_rule.toml", "SS-999"),
+        ("disable_all.toml", "every rule"),
+        ("absolute_exclude.toml", "relative path"),
+        ("parent_exclude.toml", ".."),
+        ("glob_exclude.toml", "globs are not supported"),
+        ("syntax_error.toml", "invalid config file"),
+    ];
+    for (file, needle) in cases {
+        let cfg = fixture(&format!("config/files/{file}"));
+        let o = scan(
+            "negative/good_metadata",
+            &["--config", cfg.to_str().unwrap()],
+        );
+        assert_eq!(code(&o), 2, "{file}: {}", err(&o));
+        assert!(err(&o).contains(needle), "{file}: {}", err(&o));
+        assert!(out(&o).is_empty(), "{file} must not print a report");
+    }
+}
+
+#[test]
+fn missing_explicit_config_is_a_usage_error() {
+    let o = scan(
+        "negative/good_metadata",
+        &["--config", "/no/such/sorobanshield.toml"],
+    );
+    assert_eq!(code(&o), 2);
+    assert!(err(&o).contains("not found"));
+}
+
+#[test]
+fn malformed_auto_discovered_config_is_not_ignored() {
+    let d = std::env::temp_dir().join(format!("ss-cfg-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(d.join("src")).unwrap();
+    std::fs::write(
+        d.join("Cargo.toml"),
+        "[package]\nname=\"x\"\nversion=\"0.1.0\"\n[dependencies]\nsoroban-sdk=\"22\"\n",
+    )
+    .unwrap();
+    std::fs::write(d.join("src/lib.rs"), "").unwrap();
+    std::fs::write(d.join("sorobanshield.toml"), "[scan\n").unwrap();
+    let o = run(&["scan", d.to_str().unwrap()]);
+    let _ = std::fs::remove_dir_all(&d);
+    assert_eq!(code(&o), 2);
+}

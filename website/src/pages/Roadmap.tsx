@@ -9,7 +9,7 @@ const items: { title: string; state: State; note: string }[] = [
   { title: 'JSON report and exit codes', state: 'done', note: 'Versioned JSON schema, --fail-on threshold, exit codes 0 to 3, integration tests.' },
   { title: 'Documentation website', state: 'in progress', note: 'Initial version: landing page, docs, generated rule catalog.' },
   { title: 'CI workflow', state: 'done', note: 'Repository workflow (fmt, clippy, tests, website build) ran successfully on its first push to main.' },
-  { title: 'Configuration file', state: 'planned', note: 'Not implemented. Only command-line flags exist today.' },
+  { title: 'Configuration file', state: 'done', note: 'sorobanshield.toml: path-prefix exclusions, rule disabling and fail_on, strictly validated.' },
   { title: 'SARIF output', state: 'planned', note: 'Not implemented.' },
   { title: 'Additional rules SS-003 to SS-005', state: 'planned', note: 'Each will ship only with fixtures, tests and documented limitations.' },
   { title: 'First tagged release', state: 'planned', note: 'No release has been published. Build from source.' },

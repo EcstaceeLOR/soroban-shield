@@ -61,9 +61,10 @@ fn parse(path: &Path) -> Result<syn::File, String> {
 
 pub fn discover_and_scan(
     root: &Path,
+    exclude: &[String],
     rules: &[Box<dyn Rule>],
 ) -> Result<(Project, ScanOutcome), ProjectError> {
-    let project = Project::discover(root)?;
+    let project = Project::discover_with(root, exclude)?;
     let outcome = scan_project(&project, rules);
     Ok((project, outcome))
 }

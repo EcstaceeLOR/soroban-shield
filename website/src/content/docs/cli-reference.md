@@ -24,7 +24,8 @@ Scans a Soroban project. `PATH` defaults to `.` and must be a project root conta
 | Option | Values | Default | Meaning |
 | --- | --- | --- | --- |
 | `--format` | `text`, `json` | `text` | Output format on stdout. |
-| `--fail-on` | `info`, `low`, `medium`, `high`, `critical` | `low` | Exit `1` when any finding has at least this severity. |
+| `--fail-on` | `info`, `low`, `medium`, `high`, `critical` | `low` (or `fail_on` from the config file) | Exit `1` when any finding has at least this severity. The flag overrides the config file. |
+| `--config` | file path | `<PATH>/sorobanshield.toml` if it exists | Configuration file; see [Configuration](/docs/configuration). |
 
 Errors are written to stderr. With `--format json`, stdout contains only the JSON document.
 
@@ -57,7 +58,7 @@ Prints a rule's concern, detection method, severity rationale, remediation, know
 | --- | --- |
 | `0` | The scan completed and no finding reached the `--fail-on` severity (or a `rules` command succeeded). |
 | `1` | The scan completed and at least one finding reached the `--fail-on` severity. |
-| `2` | Invalid usage: unknown command, bad option value, or unknown rule ID. |
+| `2` | Invalid usage or configuration: unknown command, bad option value, unknown rule ID, or a missing or invalid config file. |
 | `3` | The scan could not be completed: path missing or not a directory, no `Cargo.toml`, malformed manifest, not a Soroban project, no Rust files, or a source file that could not be read or parsed. |
 
 A scan that could not analyze every file exits `3` even if no findings were found. It is never reported as clean.

@@ -3,12 +3,12 @@
 ```text
 sorobanshield --help
 sorobanshield --version
-sorobanshield scan [PATH] [--format text|json] [--fail-on info|low|medium|high|critical]
+sorobanshield scan [PATH] [--format text|json] [--fail-on info|low|medium|high|critical] [--config FILE]
 sorobanshield rules list [--format text|json]
 sorobanshield rules explain <RULE_ID> [--format text|json]
 ```
 
-`PATH` defaults to `.`. `--format` defaults to `text`; `--fail-on` defaults to `low`. Rule IDs are case-insensitive.
+`PATH` defaults to `.`. `--format` defaults to `text`. `--fail-on` defaults to `low` unless the config file sets `fail_on`; the flag wins over the config file. `--config` defaults to `<PATH>/sorobanshield.toml` when present. See [configuration.md](configuration.md). Rule IDs are case-insensitive.
 
 ## Exit codes
 
@@ -16,7 +16,7 @@ sorobanshield rules explain <RULE_ID> [--format text|json]
 |---|---|
 | 0 | Scan completed; no finding at or above `--fail-on` |
 | 1 | Scan completed; at least one finding at or above `--fail-on` |
-| 2 | Invalid usage (unknown command or option, bad `--fail-on`, unknown rule ID) |
+| 2 | Invalid usage or configuration (unknown command or option, bad `--fail-on`, unknown rule ID, missing or invalid config file) |
 | 3 | Scan could not be completed: path missing or not a directory, missing/malformed `Cargo.toml`, no `soroban-sdk` dependency, no `.rs` files, or a source file that could not be read or parsed |
 
 Errors go to stderr. In JSON mode stdout contains only the JSON document when a report was produced; discovery failures produce no JSON, only stderr and exit 3.
@@ -27,7 +27,7 @@ Errors go to stderr. In JSON mode stdout contains only the JSON document when a 
 {
   "schema_version": 1,
   "tool": { "name": "sorobanshield", "version": "0.1.0" },
-  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001"], "errors": [] },
+  "scan": { "root": ".", "files_scanned": 1, "rules_run": ["SS-001", "SS-002", "SS-006"], "config_file": null, "exclude": [], "disabled_rules": [], "errors": [] },
   "summary": { "total": 1, "by_severity": { "info": 0, "low": 0, "medium": 1, "high": 0, "critical": 0 } },
   "findings": [
     {

@@ -18,6 +18,12 @@ pub struct ScanInfo {
     pub root: String,
     pub files_scanned: usize,
     pub rules_run: Vec<String>,
+    /// Path of the configuration file that was applied, if any.
+    pub config_file: Option<String>,
+    /// Path prefixes excluded by configuration.
+    pub exclude: Vec<String>,
+    /// Rules disabled by configuration.
+    pub disabled_rules: Vec<String>,
     pub errors: Vec<ScanError>,
 }
 
@@ -54,6 +60,9 @@ impl Report {
                 root: root.to_string(),
                 files_scanned: outcome.files_scanned,
                 rules_run,
+                config_file: None,
+                exclude: Vec::new(),
+                disabled_rules: Vec::new(),
                 errors: outcome.errors,
             },
             summary: Summary {
@@ -86,6 +95,14 @@ impl Report {
             self.scan.files_scanned,
             self.scan.rules_run.len()
         );
+        if let Some(c) = &self.scan.config_file {
+            let _ = writeln!(
+                s,
+                "config: {c} ({} excluded path(s), {} rule(s) disabled)",
+                self.scan.exclude.len(),
+                self.scan.disabled_rules.len()
+            );
+        }
         for e in &self.scan.errors {
             let _ = writeln!(s, "error: {}: {}", e.file, e.message);
         }
