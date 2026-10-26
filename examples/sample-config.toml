@@ -1,0 +1,12 @@
+# Example sorobanshield.toml. Copy to your project root, or pass it with --config.
+# See docs/configuration.md for the full reference.
+
+[scan]
+# Project-relative path prefixes to skip (files or directories; globs are not supported).
+exclude = ["vendor", "tests/generated"]
+# Exit 1 when a finding has at least this severity: info, low, medium, high or critical.
+fail_on = "medium"
+
+[rules]
+# Rule IDs that should not run, for example SS-005 if tests live in another repository.
+disable = ["SS-005"]

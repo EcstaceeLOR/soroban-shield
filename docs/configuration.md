@@ -15,6 +15,8 @@ fail_on = "medium"
 disable = ["SS-002"]
 ```
 
+A copy of this example lives in [`examples/sample-config.toml`](../examples/sample-config.toml) and is validated by the test suite.
+
 ## Validation
 
 - Unknown keys and sections are rejected (a misspelled `exlude` is an error, not ignored).

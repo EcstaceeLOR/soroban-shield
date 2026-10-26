@@ -662,3 +662,19 @@ fn ss005_suggests_tests_project_wide() {
     assert!(partial[0]["message"].as_str().unwrap().contains("`clear`"));
     assert_eq!(partial[0]["file"], "src/lib.rs");
 }
+
+#[test]
+fn the_documented_sample_config_is_valid() {
+    let cfg = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/sample-config.toml");
+    let o = scan(
+        "negative/good_metadata",
+        &["--config", cfg.to_str().unwrap(), "--format", "json"],
+    );
+    assert_eq!(code(&o), 0, "{}", err(&o));
+    let v = json(&o);
+    assert_eq!(v["scan"]["disabled_rules"], serde_json::json!(["SS-005"]));
+    assert_eq!(
+        v["scan"]["exclude"],
+        serde_json::json!(["vendor", "tests/generated"])
+    );
+}
