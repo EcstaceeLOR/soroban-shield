@@ -6,7 +6,7 @@ pub struct Vault;
 
 #[contractimpl]
 impl Vault {
-    // Known false negative: arithmetic on a local copy of a parameter is not tracked.
+    // Arithmetic on a local copy of a parameter is tracked.
     pub fn add_via_local(_env: Env, balance: i128) -> i128 {
         let total = balance;
         total + 1

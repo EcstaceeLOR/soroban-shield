@@ -30,16 +30,17 @@ Static analysis cannot prove that a contract is secure. SorobanShield is a heuri
 
 ## SS-002 false positives
 
-- Arithmetic on values already bounded by earlier validation or by the domain.
+- Arithmetic on values already bounded by earlier validation or by the domain. A helper finding in particular reflects a value passed by a same-file call matched by name; the caller may have bounded it.
 - Builds with `overflow-checks` enabled, where overflow traps deterministically and that is acceptable.
 - Intentional wrapping or truncating behavior.
 
 ## SS-002 false negatives
 
-- Arithmetic on locals, struct fields, storage reads or function results: only direct integer-parameter operands are tracked.
-- Operations in private helpers, other files or macros.
-- Type aliases, and `i8`/`i16`/`u8`/`u16`/`usize`/`isize` parameters.
-- Division, remainder, shifts, casts of non-parameter expressions, and fixed-point rounding issues.
+- Tracking starts from integer parameters of the types listed below. A local is tracked only when a plain `let` binds it to a tracked name, arithmetic (`+ - *`) over one, or a cast of one. Struct fields, storage reads, function results, tuple patterns, loops and method calls (`clone`, `into`) are not followed.
+- Flow is not tracked. A local stays tracked in every branch, and a plain assignment (`x = 5;`) does not stop tracking, although a later `let` of the same name that is not tracked does.
+- Helpers are followed only within the same file, only when the helper's name is defined exactly once there and is not itself an entrypoint, and only through `f(..)`, `Self::f(..)` and `self.f(..)` calls. Helpers in other files, calls through other receivers, and macros are not followed.
+- Type aliases, and `i8`/`i16`/`u8`/`u16`/`usize`/`isize` parameters, are not recognised.
+- Division, remainder, shifts, casts of non-tracked expressions, and fixed-point rounding issues.
 
 ## SS-003 false positives
 
@@ -81,7 +82,7 @@ Unit and property tests, manual review, threat modelling and, for contracts that
 
 ## Trial on real code
 
-The scanner was run on [stellar/soroban-examples](https://github.com/stellar/soroban-examples) at commit `03d42aa` (32 independent projects, 117 Rust files). Every file parsed without error. Before the changes recorded in the changelog for `__constructor` and out-of-line test modules, the scan reported 114 findings (SS-001 19, SS-002 8, SS-003 9, SS-004 28, SS-005 10, SS-006 40); afterwards it reported 95 (SS-001 10, SS-002 6, SS-003 9, SS-004 26, SS-005 4, SS-006 40). Most remaining SS-001 findings are tutorial counters whose `increment` is intentionally open, which is the false-positive class listed above.
+The scanner was run on [stellar/soroban-examples](https://github.com/stellar/soroban-examples) at commit `03d42aa` with `scan --recursive` (39 projects, 128 Rust files). Every file parsed without error. It reported 116 findings: SS-001 10, SS-002 9, SS-003 10, SS-004 35, SS-005 5, SS-006 47. Earlier, scanning only the 32 top-level projects one at a time, two false-positive classes (`__constructor`, and files declared with `#[cfg(test)] mod name;`) were found and fixed, which cut that scan from 114 to 95 findings. Most remaining SS-001 findings are tutorial counters whose `increment` is intentionally open, which is the false-positive class listed above. SS-002's three newest findings in this corpus come from following integer arguments into same-file helpers such as `burn_shares` in `liquidity_pool`.
 
 Three larger codebases were scanned afterwards, with no parse errors. These counts are after SS-001 learned to follow storage writes and authorization across files, to read OpenZeppelin access-control attributes, and to treat the methods of `#[contractimpl] impl Trait for Type` blocks as entrypoints (they carry no `pub` keyword, so they had been invisible to every rule):
 

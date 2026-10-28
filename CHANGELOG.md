@@ -5,6 +5,7 @@ All notable user-visible changes are recorded here. The project follows semantic
 ## Unreleased
 
 ### Changed
+- SS-002 now tracks integer locals derived from parameters by a plain `let` (including through arithmetic and casts) and follows tracked arguments into same-file helpers whose name is unique, reporting at the arithmetic site in the helper. Locals were previously a documented false negative; the old fixture moved to `positive/local_arithmetic`.
 - SS-001 is now project-wide. It follows calls by function name, only to names defined exactly once in the project, so a storage write or `require_auth` in a helper in another file is seen. Writes are followed through path calls only, not method calls. Indirect findings point at the call and say which helper writes. `#[only_owner]`, `#[only_admin]`, `#[only_role]` and `#[only_any_role]` count as authorization; `#[has_role]` does not.
 - Methods of `#[contractimpl] impl Trait for Type` blocks are now treated as public entrypoints by SS-001 to SS-005. They have no `pub` keyword, so contracts written with a trait had been invisible to the rules.
 - SS-001 and SS-005 no longer report `__constructor`, which runs only at deployment. Files declared with `#[cfg(test)] mod name;` are now treated as test-only: per-file rules skip them, and SS-005 reads them as test code. Files under a `tests/` directory are also test-only. Found by scanning stellar/soroban-examples and larger public codebases; see `docs/limitations.md`.

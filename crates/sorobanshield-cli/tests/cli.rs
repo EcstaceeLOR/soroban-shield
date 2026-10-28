@@ -219,10 +219,33 @@ fn ss002_flags_unchecked_arithmetic_and_casts() {
 fn ss002_negative_and_edge_fixtures_are_clean() {
     for f in [
         "negative/checked_arithmetic",
-        "edge/local_arithmetic_untracked",
+        "edge/storage_arithmetic_untracked",
     ] {
         assert_eq!(code(&scan(f, &[])), 0, "{f}");
     }
+}
+
+#[test]
+fn ss002_follows_locals_and_same_file_helpers() {
+    let o = scan("positive/local_arithmetic", &["--format", "json"]);
+    assert_eq!(code(&o), 1, "{}", out(&o));
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    let m = v["findings"][0]["message"].as_str().unwrap();
+    assert!(
+        m.contains("`total` (derived from integer parameter `balance`)"),
+        "{m}"
+    );
+
+    let o = scan("positive/helper_arithmetic", &["--format", "json"]);
+    assert_eq!(code(&o), 1, "{}", out(&o));
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    let f = &v["findings"][0];
+    assert_eq!(f["rule_id"], "SS-002");
+    assert_eq!(f["start_line"], 8);
+    assert!(f["message"]
+        .as_str()
+        .unwrap()
+        .starts_with("Helper `add_fee`"));
 }
 
 #[test]

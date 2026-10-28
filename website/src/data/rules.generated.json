@@ -40,8 +40,8 @@
     "status": "implemented",
     "severity": "low",
     "confidence": "low",
-    "concern": "Public contract functions that apply +, - or * (or their assignment forms) directly to an integer argument, or cast an integer argument to a narrower or differently signed type, may overflow, underflow, truncate or change sign on attacker-chosen input. Whether that is a problem depends on the build's overflow-checks setting and on validation this rule cannot see.",
-    "detection": "Parses each file with syn. In public functions of #[contractimpl] impl blocks it records parameters whose declared type is one of i32, u32, i64, u64, i128 or u128. It reports a function when the body applies +, -, *, +=, -= or *= with such a parameter as a direct operand, or uses `param as T` where T is narrower than the parameter type or has the same width but different signedness. Calls such as checked_add, saturating_sub or try_into are method calls and are never reported. #[cfg(test)] items are skipped.",
+    "concern": "Public contract functions (and same-file helpers they pass integer arguments to) that apply +, - or * (or their assignment forms) to an integer argument or a local derived from one, or cast such a value to a narrower or differently signed type, may overflow, underflow, truncate or change sign on attacker-chosen input. Whether that is a problem depends on the build's overflow-checks setting and on validation this rule cannot see.",
+    "detection": "Parses each file with syn. In public functions of #[contractimpl] impl blocks it records parameters whose declared type is one of i32, u32, i64, u64, i128 or u128. It reports a function when the body applies +, -, *, +=, -= or *= with such a parameter as a direct operand, or uses `param as T` where T is narrower than the parameter type or has the same width but different signedness. A local introduced by `let` is tracked when its initializer is a tracked name, arithmetic (+, -, *) over one, or a cast of one; a later `let` of the same name that is not tracked stops the tracking. When a tracked value is passed as an argument to a function of the same file whose name is defined exactly once (and is not itself a contract entrypoint), the matching parameter of that helper is tracked too, through `f(..)`, `Self::f(..)` and `self.f(..)` calls, and a finding is reported in the helper at the arithmetic site. Calls such as checked_add, saturating_sub or try_into are method calls and are never reported. #[cfg(test)] items are skipped.",
     "severity_rationale": "Low severity: with overflow-checks enabled (as Soroban contract release profiles commonly do), overflow traps instead of wrapping, so the common outcome is a failed invocation rather than corrupted state; truncating casts and builds without overflow checks are worse. Low confidence: only direct uses of parameters are visible, and domain constraints that bound the values are not understood. This is a review prompt, not a vulnerability claim.",
     "remediation": "Decide what should happen at the boundary. Use checked_add / checked_sub / checked_mul and return a contract error, or saturating/wrapping variants if that is intended. Replace narrowing `as` casts with try_into and handle the error. Validate argument ranges, confirm overflow-checks = true in the release profile, and add tests at the numeric boundaries.",
     "false_positives": [
@@ -50,8 +50,8 @@
       "Intentional wrapping or truncating behavior."
     ],
     "false_negatives": [
-      "Arithmetic on local variables, struct fields, storage reads or function results: only direct parameter operands are tracked.",
-      "Operations inside private helper functions, other files, or macros.",
+      "Arithmetic on struct fields, storage reads, function results, or locals that are not derived from a tracked integer by a plain `let` (for example through a tuple pattern, a loop, or a method call such as clone or into).",
+      "Operations inside helpers in other files, helpers whose name is defined more than once in the file, calls through method receivers other than self, and macros. Flow is not tracked: a local keeps its tracking in every branch, so a value reassigned to a bounded constant on one path is still treated as tracked.",
       "Type aliases for integers and i8/i16/u8/u16/usize/isize parameters, which are not recognised.",
       "Division and remainder, shifts, and casts of non-parameter expressions.",
       "Rounding and precision problems in fixed-point math."
@@ -63,7 +63,9 @@
     "fixtures": [
       "tests/fixtures/positive/unchecked_arithmetic",
       "tests/fixtures/negative/checked_arithmetic",
-      "tests/fixtures/edge/local_arithmetic_untracked"
+      "tests/fixtures/positive/local_arithmetic",
+      "tests/fixtures/positive/helper_arithmetic",
+      "tests/fixtures/edge/storage_arithmetic_untracked"
     ]
   },
   {

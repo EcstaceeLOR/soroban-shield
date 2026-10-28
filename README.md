@@ -12,7 +12,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Project discovery and validation | Implemented, tested |
 | Terminal and JSON reports (schema v1) | Implemented, tested |
 | Rule `SS-001` authorization path review | Implemented (heuristic, medium severity / low confidence; follows storage writes and auth calls across files by unique function name) |
-| Rule `SS-002` arithmetic boundary review | Implemented (heuristic, low severity / low confidence) |
+| Rule `SS-002` arithmetic boundary review | Implemented (heuristic, low severity / low confidence; follows integer parameters through locals and same-file helpers) |
 | Rule `SS-006` dependency and toolchain diagnostics | Implemented (informational, reads `Cargo.toml` and project files only) |
 | Rule `SS-003` external contract call review | Implemented (heuristic, low severity / low confidence) |
 | Rule `SS-004` error-path review | Implemented (informational, low confidence) |
