@@ -5,6 +5,7 @@ pub mod finding;
 pub mod project;
 pub mod report;
 pub mod rule;
+pub mod suppress;
 
 pub use baseline::{Applied, Baseline, BaselineError};
 pub use config::{Config, ConfigError};
@@ -13,4 +14,5 @@ pub use finding::{Confidence, Finding, Severity};
 pub use project::{Project, ProjectError};
 pub use report::Report;
 pub use rule::{ManifestUnit, ProjectUnit, Rule, RuleMeta, RuleStatus, SourceUnit};
+pub use suppress::{Suppression, UnusedSuppression};
 pub use toml;

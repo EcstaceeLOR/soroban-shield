@@ -55,6 +55,14 @@ Each entry identifies a finding by rule ID, file and message, never by line numb
 
 Suppression is visible: the text report prints a `baseline:` line, and the JSON report sets `summary.suppressed_by_baseline`, `scan.baseline_file` and `scan.baseline_unmatched`. A non-zero `baseline_unmatched` means some entries no longer match any finding (the issue was fixed or its message changed) and can be regenerated. Baselines hide findings; they do not mean the findings were reviewed or are safe. Commit the baseline and review changes to it like code.
 
+## Inline suppressions
+
+A comment of the form `// sorobanshield-ignore: SS-001, SS-003 -- reason` hides findings of the named rules on the comment's own line or on the next line of code (blank lines, other comments and `#[...]` attributes are skipped). When that line opens a `{` block, such as a function, the whole block is covered; the end of the block is found by counting braces outside string literals, so it is approximate. The reason after `--` is optional but recommended.
+
+Suppression is never silent. The text report prints an `inline suppressions:` list with each hidden finding and its reason. The JSON report sets `summary.suppressed_by_comment` and lists every hidden finding in `suppressions` (`rule_id`, `file`, `line`, `reason`). A rule ID that matched no finding is reported as a warning and in `unused_suppressions`, so stale comments can be cleaned up.
+
+Limits: this works for Rust source findings only. Manifest and project-wide findings (SS-005, SS-006) have no source line to attach to; use `[rules] disable` or a baseline for those. The comment is found by a line scan, so a `//` inside a string literal that contains the marker is also read as a directive. A suppression records that someone chose to hide a finding. It does not mean the finding was reviewed or is safe.
+
 ## SARIF output
 
 `sorobanshield scan --format sarif` writes a SARIF 2.1.0 log for code-scanning tools. Severity maps to the SARIF `level`: `critical` and `high` become `error`, `medium` becomes `warning`, and `low` and `info` become `note`. The original severity and confidence are kept in each result's `properties`. Findings carry a file URI relative to the scan root (`uriBaseId` `%SRCROOT%`) and, when known, a line region; manifest findings have no region. `invocations[0].executionSuccessful` is `false`, with a notification per file, when files could not be analyzed.

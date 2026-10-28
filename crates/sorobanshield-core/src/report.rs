@@ -1,6 +1,7 @@
 use crate::engine::{ScanError, ScanOutcome};
 use crate::finding::{Finding, Severity};
 use crate::rule::RuleMeta;
+use crate::suppress::{Suppression, UnusedSuppression};
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fmt::Write;
@@ -38,6 +39,8 @@ pub struct Summary {
     pub total: usize,
     /// Findings hidden because they are listed in the baseline.
     pub suppressed_by_baseline: usize,
+    /// Findings hidden by `sorobanshield-ignore` comments.
+    pub suppressed_by_comment: usize,
     pub by_severity: BTreeMap<String, usize>,
 }
 
@@ -48,6 +51,10 @@ pub struct Report {
     pub scan: ScanInfo,
     pub summary: Summary,
     pub findings: Vec<Finding>,
+    /// Every finding hidden by an inline comment, with its stated reason.
+    pub suppressions: Vec<Suppression>,
+    /// Rule IDs named in suppression comments that matched no finding.
+    pub unused_suppressions: Vec<UnusedSuppression>,
     pub disclaimer: &'static str,
 }
 
@@ -78,9 +85,12 @@ impl Report {
             summary: Summary {
                 total: outcome.findings.len(),
                 suppressed_by_baseline: 0,
+                suppressed_by_comment: outcome.suppressed.len(),
                 by_severity,
             },
             findings: outcome.findings,
+            suppressions: outcome.suppressed,
+            unused_suppressions: outcome.unused_suppressions,
             disclaimer: DISCLAIMER,
         }
     }
@@ -216,6 +226,33 @@ impl Report {
                 self.summary.suppressed_by_baseline, self.scan.baseline_unmatched
             );
         }
+        if !self.suppressions.is_empty() {
+            let _ = writeln!(
+                s,
+                "inline suppressions: {} finding(s) hidden by sorobanshield-ignore comments",
+                self.suppressions.len()
+            );
+            for x in &self.suppressions {
+                let _ = writeln!(
+                    s,
+                    "  {} at {}:{}{}",
+                    x.rule_id,
+                    x.file,
+                    x.line,
+                    x.reason
+                        .as_ref()
+                        .map(|r| format!(" ({r})"))
+                        .unwrap_or_default()
+                );
+            }
+        }
+        for u in &self.unused_suppressions {
+            let _ = writeln!(
+                s,
+                "warning: {}:{}: sorobanshield-ignore for {} matched no finding",
+                u.file, u.line, u.rule_id
+            );
+        }
         for e in &self.scan.errors {
             let _ = writeln!(s, "error: {}: {}", e.file, e.message);
         }
@@ -283,6 +320,7 @@ mod tests {
                 files_scanned: 1,
                 findings,
                 errors,
+                ..Default::default()
             },
         )
     }

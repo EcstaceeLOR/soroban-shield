@@ -722,3 +722,33 @@ fn relative_links_in_repository_markdown_resolve() {
     );
     assert!(broken.is_empty(), "broken relative links: {broken:?}");
 }
+
+#[test]
+fn inline_comment_suppresses_finding_and_is_reported() {
+    let o = scan("edge/inline_suppression", &["--format", "json"]);
+    assert_eq!(code(&o), 0, "{}", out(&o));
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    assert_eq!(v["summary"]["total"], 0);
+    assert_eq!(v["summary"]["suppressed_by_comment"], 1);
+    let s = &v["suppressions"][0];
+    assert_eq!(s["rule_id"], "SS-001");
+    assert_eq!(s["file"], "src/lib.rs");
+    assert_eq!(s["reason"], "caller is gated by the admin contract");
+    // SS-004 was named but never fired, so it is flagged as unused.
+    assert_eq!(v["unused_suppressions"][0]["rule_id"], "SS-004");
+}
+
+#[test]
+fn text_report_lists_suppressions_and_unused_warnings() {
+    let o = scan("edge/inline_suppression", &[]);
+    let t = out(&o);
+    assert!(t.contains("inline suppressions: 1 finding(s)"), "{t}");
+    assert!(
+        t.contains("SS-001 at src/lib.rs:11 (caller is gated"),
+        "{t}"
+    );
+    assert!(
+        t.contains("warning: src/lib.rs:9: sorobanshield-ignore for SS-004 matched no finding"),
+        "{t}"
+    );
+}

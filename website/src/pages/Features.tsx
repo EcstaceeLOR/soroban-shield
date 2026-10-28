@@ -7,6 +7,7 @@ const scanner = [
   ['Text, JSON and SARIF reports', 'JSON uses a versioned schema; SARIF 2.1.0 targets code-scanning tools; output is deterministic.'],
   ['Configuration file', 'sorobanshield.toml: exclude path prefixes, disable rules, set fail_on. Unknown keys and rule IDs are errors.'],
   ['Baselines', 'scan --write-baseline / --baseline hide recorded findings so teams can fail only on new ones; suppression is always shown in the report.'],
+  ['Inline suppressions', '// sorobanshield-ignore: SS-001 -- reason hides findings on a line or block; every suppression and every unused one is reported.'],
   ['Exit codes and --fail-on', 'Distinguishes findings (1), invalid usage (2) and scans that could not complete (3).'],
   ['Rule catalog commands', 'rules list and rules explain, with JSON output.'],
   ['Fixture-based tests', 'Positive, negative and edge-case fixture projects plus CLI integration tests.'],
@@ -22,7 +23,7 @@ const ruleSummaries = [
 ]
 
 const planned = [
-  'Inline suppression comments and glob-based exclusions',
+  'Glob-based exclusions',
   'Multi-contract / workspace reporting',
   'Published releases and prebuilt binaries',
 ]

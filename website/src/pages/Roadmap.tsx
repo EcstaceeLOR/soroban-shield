@@ -10,6 +10,7 @@ const items: { title: string; state: State; note: string }[] = [
   { title: 'Documentation website', state: 'in progress', note: 'Initial version: landing page, docs, generated rule catalog.' },
   { title: 'CI workflow', state: 'done', note: 'Repository workflow (fmt, clippy, tests, website build) ran successfully on its first push to main.' },
   { title: 'Configuration file', state: 'done', note: 'sorobanshield.toml: path-prefix exclusions, rule disabling and fail_on, strictly validated.' },
+  { title: 'Inline suppression comments', state: 'done', note: 'sorobanshield-ignore comments on a line or block; suppressions and unused directives are always reported.' },
   { title: 'Baseline support', state: 'done', note: 'Record findings once and fail only on new ones; entries ignore line numbers; suppression is reported.' },
   { title: 'SARIF output', state: 'done', note: 'SARIF 2.1.0 via --format sarif; sample outputs were validated against the official schema by hand, not in CI.' },
   { title: 'Rules SS-003, SS-004 and SS-005', state: 'done', note: 'External call review, error-path review and test suggestions, each with positive, negative and edge fixtures and documented limitations.' },
