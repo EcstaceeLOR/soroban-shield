@@ -26,17 +26,27 @@ pub fn receiver_chain_has_storage(mut e: &Expr) -> bool {
     }
 }
 
+/// Whether a method of a `#[contractimpl]` block is part of the contract's
+/// public interface: written `pub`, or any method of a trait impl, where the
+/// trait supplies the visibility and no `pub` keyword appears.
+pub fn is_public_entrypoint(f: &ImplItemFn, in_trait_impl: bool) -> bool {
+    in_trait_impl || matches!(f.vis, Visibility::Public(_))
+}
+
 /// Public functions of `#[contractimpl]` impl blocks, skipping `#[cfg(test)]` items.
 pub fn contract_entrypoints(items: &[Item]) -> Vec<&ImplItemFn> {
     fn walk<'a>(items: &'a [Item], out: &mut Vec<&'a ImplItemFn>) {
         for item in items {
             match item {
-                Item::Impl(ItemImpl { attrs, items, .. })
-                    if !is_cfg_test(attrs) && has_attr(attrs, "contractimpl") =>
-                {
+                Item::Impl(ItemImpl {
+                    attrs,
+                    items,
+                    trait_,
+                    ..
+                }) if !is_cfg_test(attrs) && has_attr(attrs, "contractimpl") => {
                     for it in items {
                         if let ImplItem::Fn(f) = it {
-                            if matches!(f.vis, Visibility::Public(_)) {
+                            if is_public_entrypoint(f, trait_.is_some()) {
                                 out.push(f);
                             }
                         }

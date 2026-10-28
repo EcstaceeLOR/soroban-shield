@@ -4,7 +4,7 @@ Static analysis cannot prove that a contract is secure. SorobanShield is a heuri
 
 ## General
 
-- Analysis is per file and syntactic. Macros are not expanded, types are not resolved, and there is no control-flow or cross-file analysis.
+- Analysis is syntactic. Macros are not expanded, types are not resolved, and there is no control-flow analysis. Only SS-001 and SS-005 look across files, and SS-001 does so by function name alone (see below).
 - Only Rust source and `Cargo.toml` are examined, not compiled WASM.
 - Test code is recognised by `#[cfg(test)]` (inline modules, `#![cfg(test)]` files, files under a `tests/` directory (Cargo integration tests), and `#[cfg(test)] mod name;` files found by the standard `name.rs` / `name/mod.rs` layout). `#[path = ".."]` is not followed, so such a test file is analysed like normal source. Test-only files are not reported on, but SS-005 reads them as test code.
 - `__constructor` is skipped by SS-001 and SS-005 because it runs only at deployment. A constructor that should enforce a deployer check is therefore not examined.
@@ -13,16 +13,19 @@ Static analysis cannot prove that a contract is secure. SorobanShield is a heuri
 
 ## SS-001 false positives
 
-- Intentionally open public functions, such as one-time initialization.
-- Authorization enforced in another file or crate, in a caller, or through a trait method.
+- Intentionally open public functions: one-time initialization guarded by an "already initialized" check, and permissionless keeper-style functions anyone may call by design (for example distributing emissions or opening an auction).
+- Authorization enforced by a Merkle proof, a signature or another scheme that is not `require_auth`.
+- Authorization enforced in another crate, in a caller, or through a trait method.
 - Writes to temporary storage with no security meaning.
+- A write attributed through a helper that is not the function actually called: calls are matched by name only.
 
 ## SS-001 false negatives
 
 - `require_auth` present but on the wrong address, or skipped on some paths (any occurrence in the function counts).
-- Any method named `require_auth` counts, even on an unrelated type.
-- Storage writes via macros, helpers in other files, or APIs other than `set`/`remove`.
-- Non-`pub` functions, code outside `#[contractimpl]`, and generated code.
+- Any method named `require_auth` counts, even on an unrelated type, and so does any attribute macro named `only_owner`, `only_admin`, `only_role` or `only_any_role`, whatever it expands to. `has_role` and `has_any_role` are not counted because they check membership without `require_auth`.
+- Calls are followed by name across files, but only when exactly one function of that name exists in the project, and for writes only through path calls (`storage::set_x(..)`, `Self::f(..)`), not method calls (`x.save(..)`). Names defined more than once, other crates, and macros are not followed.
+- Storage APIs other than `set`/`remove`.
+- Code outside `#[contractimpl]` and generated code.
 - Items under `#[cfg(test)]` are intentionally skipped.
 
 ## SS-002 false positives
@@ -80,14 +83,14 @@ Unit and property tests, manual review, threat modelling and, for contracts that
 
 The scanner was run on [stellar/soroban-examples](https://github.com/stellar/soroban-examples) at commit `03d42aa` (32 independent projects, 117 Rust files). Every file parsed without error. Before the changes recorded in the changelog for `__constructor` and out-of-line test modules, the scan reported 114 findings (SS-001 19, SS-002 8, SS-003 9, SS-004 28, SS-005 10, SS-006 40); afterwards it reported 95 (SS-001 10, SS-002 6, SS-003 9, SS-004 26, SS-005 4, SS-006 40). Most remaining SS-001 findings are tutorial counters whose `increment` is intentionally open, which is the false-positive class listed above.
 
-Three larger codebases were scanned afterwards, with no parse errors:
+Three larger codebases were scanned afterwards, with no parse errors. These counts are after SS-001 learned to follow storage writes and authorization across files, to read OpenZeppelin access-control attributes, and to treat the methods of `#[contractimpl] impl Trait for Type` blocks as entrypoints (they carry no `pub` keyword, so they had been invisible to every rule):
 
 | Codebase (commit) | Rust files | Findings |
 |---|---|---|
-| [OpenZeppelin/stellar-contracts](https://github.com/OpenZeppelin/stellar-contracts) (`ddc327e`) | 376 | 25: SS-004 12, SS-001 5, SS-005 4, SS-003 3, SS-006 1 |
-| [blend-capital/blend-contracts](https://github.com/blend-capital/blend-contracts) (`895845f`) | 88 | 2, both SS-006 |
-| [soroswap/core](https://github.com/soroswap/core) (`6eade00`, 6 contract crates) | 74 | 11: SS-006 10, SS-004 1 |
+| [OpenZeppelin/stellar-contracts](https://github.com/OpenZeppelin/stellar-contracts) (`ddc327e`) | 376 | 35: SS-004 19, SS-001 8, SS-005 4, SS-003 3, SS-006 1 |
+| [blend-capital/blend-contracts](https://github.com/blend-capital/blend-contracts) (`895845f`) | 88 | 16: SS-001 13, SS-003 1, SS-006 2 |
+| [soroswap/core](https://github.com/soroswap/core) (`6eade00`, 6 contract crates) | 74 | 27: SS-006 10, SS-001 8, SS-004 7, SS-003 2 |
 
-The near-silence on Blend and Soroswap is **not** evidence that they are safe. Their entrypoints delegate storage writes to helpers in other files (Blend's `pool/src/contract.rs` contains no `.storage()` calls), which per-file analysis cannot see; this is the cross-file false-negative class described above. In the OpenZeppelin examples, `vote` in `merkle-voting` is reported although access is gated by a Merkle proof rather than `require_auth`, which the rule cannot know. Scanning this corpus also showed that files under a `tests/` directory were being analysed as contract code, which is now fixed.
+Before those three changes the same scan of Blend reported only two SS-006 notes, because its entrypoints are trait-impl methods that delegate every storage write to another file. That near-silence was a blind spot, not evidence of safety. Most of Blend's 13 SS-001 findings are permissionless functions that anyone may call by design, which is what a low-confidence review prompt is expected to surface. In the OpenZeppelin examples, `vote` in `merkle-voting` is reported although access is gated by a Merkle proof rather than `require_auth`, which the rule cannot know. Scanning this corpus also showed that files under a `tests/` directory were being analysed as contract code, which is now fixed.
 
 This is a check that the scanner handles real syntax and a source of false-positive classes. It is **not** a measurement of accuracy: these are teaching examples, not audited production contracts, nobody triaged every finding for true positives, and the same projects informed the two fixes.

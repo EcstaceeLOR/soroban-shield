@@ -5,20 +5,21 @@
     "status": "implemented",
     "severity": "medium",
     "confidence": "low",
-    "concern": "A public contract function writes to contract storage, but no require_auth call is visible in the function or in a same-file helper it calls. Authorization may be missing, or it may be enforced somewhere this rule cannot see.",
-    "detection": "Parses each Rust file with syn. In impl blocks annotated #[contractimpl], for each public function it looks for storage writes (a .set(..) or .remove(..) call whose receiver chain contains .storage()) and for require_auth / require_auth_for_args calls. A function is reported when it writes storage, contains no such auth call, and calls no same-file function that does. Items under #[cfg(test)] are skipped, and so is the __constructor function, which runs only at deployment.",
+    "concern": "A public contract function writes to contract storage, directly or through helper functions it calls, but no require_auth call is visible in the function or in the helpers it calls. Authorization may be missing, or it may be enforced somewhere this rule cannot see.",
+    "detection": "Parses each Rust file with syn. In impl blocks annotated #[contractimpl], for each public function it looks for storage writes (a .set(..) or .remove(..) call whose receiver chain contains .storage()) and for require_auth / require_auth_for_args calls. The scan is project-wide. A call to a function is followed by its last path segment, and only when exactly one function with that name exists in the project's non-test code, so a write or an auth call in a helper in another file is seen. Writes are followed through path calls such as storage::set_x(..) or Self::f(..), not through method calls on a receiver. A function is reported when it writes storage (directly or through such helpers), contains no auth call, and calls no same-file function, and no uniquely named function elsewhere, that reaches one. For an indirect write the finding points at the call. The attribute macros #[only_owner], #[only_admin], #[only_role] and #[only_any_role] (OpenZeppelin stellar-contracts) count as authorization; #[has_role] and #[has_any_role] do not, because they check membership without require_auth. Items under #[cfg(test)] are skipped, and so is the __constructor function, which runs only at deployment.",
     "severity_rationale": "Medium: missing authorization on a storage write can be serious, but this rule only establishes that no auth call is visible, not that authorization is absent. Confidence is low for the same reason, so the finding is a prompt for manual review, not a vulnerability claim.",
     "remediation": "Trace every caller of the function. If the write must be restricted, call require_auth() on the relevant Address before it, and add tests for authorized and unauthorized callers. If authorization is enforced elsewhere (for example the function is only reachable through an authorized entrypoint), document that and treat the finding as reviewed.",
     "false_positives": [
       "Public initialization functions that are intentionally callable once by anyone.",
-      "Authorization performed in a helper defined in another file or crate, in a caller, or via a trait method.",
+      "Authorization performed in another crate, in a caller, via a trait method, or in a helper reached by a call this rule does not follow (a method call, or a name defined more than once).",
       "Writes to temporary storage that carry no security meaning."
     ],
     "false_negatives": [
       "A require_auth call exists but is on the wrong Address, or is conditional and skipped on some paths.",
-      "Storage writes hidden behind macros, helper functions in other files, or non-set/remove APIs (for example extend_ttl or bump).",
+      "Storage writes hidden behind macros, behind method calls (receiver.save(..)), behind helper names defined more than once in the project, in other crates, or through non-set/remove APIs (for example extend_ttl or bump).",
+      "A write reached through a same-named function that is not the one actually called: calls are matched by name, not resolved by type or path.",
       "Functions not marked pub or not inside #[contractimpl], and contract code that is generated rather than written.",
-      "Any call named require_auth on an unrelated type is counted as authorization."
+      "Any call named require_auth on an unrelated type is counted as authorization, and so is any attribute macro named only_owner, only_admin, only_role or only_any_role, whatever it actually expands to."
     ],
     "references": [
       "https://developers.stellar.org/docs/build/smart-contracts/example-contracts/auth",
@@ -28,6 +29,8 @@
       "tests/fixtures/positive/unprotected_write",
       "tests/fixtures/negative/protected_write",
       "tests/fixtures/negative/helper_auth",
+      "tests/fixtures/positive/cross_file_write",
+      "tests/fixtures/negative/cross_file_auth",
       "tests/fixtures/edge/test_module_ignored"
     ]
   },

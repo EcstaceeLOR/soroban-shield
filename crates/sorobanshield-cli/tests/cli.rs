@@ -59,10 +59,25 @@ fn positive_fixture_reports_finding_and_exits_1() {
 }
 
 #[test]
+fn cross_file_storage_write_is_reported_at_the_call_site() {
+    let o = scan("positive/cross_file_write", &[]);
+    assert_eq!(code(&o), 1, "{}", out(&o));
+    let t = out(&o);
+    assert!(t.contains("SS-001"), "{t}");
+    assert!(t.contains("src/lib.rs:12"), "{t}");
+    assert!(
+        t.contains("through `write_value` (defined in src/storage.rs"),
+        "{t}"
+    );
+    assert!(!t.contains("get_value"), "{t}");
+}
+
+#[test]
 fn negative_fixtures_are_clean() {
     for f in [
         "negative/protected_write",
         "negative/helper_auth",
+        "negative/cross_file_auth",
         "edge/test_module_ignored",
         "edge/test_file_ignored",
     ] {

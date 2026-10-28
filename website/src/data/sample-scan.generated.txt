@@ -2,9 +2,9 @@ SorobanShield 0.1.0 - scanned 2 file(s) with 6 rule(s)
 
 [1] SS-001 Authorization path review (severity: medium, confidence: low)
     at src/lib.rs:10
-    Public contract function `set_value` writes to storage (1 write(s)) but no require_auth call is visible in it or in a same-file helper it calls. Review whether every caller is meant to be allowed to do this.
+    Public contract function `set_value` writes to storage (1 write(s)) but no require_auth call is visible in it or in a function it calls. Review whether every caller is meant to be allowed to do this.
     next step: Trace every caller of the function. If the write must be restricted, call require_auth() on the relevant Address before it, and add tests for authorized and unauthorized callers. If authorization is enforced elsewhere (for example the function is only reachable through an authorized entrypoint), document that and treat the finding as reviewed.
-    limitation: Authorization enforced in another file, a caller or a trait method is not visible to this rule.
+    limitation: Authorization enforced in another crate, a caller, a trait method, or a function reached by a call this rule does not follow is not visible to it.
     limitation: This is a review prompt, not proof that authorization is missing.
 
 1 finding(s). Static analysis cannot prove a contract is secure. A scan with no findings only means the implemented checks reported nothing.
