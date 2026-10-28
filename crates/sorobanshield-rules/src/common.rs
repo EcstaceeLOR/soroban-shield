@@ -7,19 +7,7 @@ pub fn has_attr(attrs: &[Attribute], name: &str) -> bool {
     attrs.iter().any(|a| a.path().is_ident(name))
 }
 
-/// True for `#[cfg(test)]` and `#[cfg(any(test, ..))]`-style attributes.
-pub fn is_cfg_test(attrs: &[Attribute]) -> bool {
-    attrs.iter().any(|a| match &a.meta {
-        syn::Meta::List(l) => {
-            a.path().is_ident("cfg")
-                && l.tokens
-                    .to_string()
-                    .split(|c: char| !c.is_alphanumeric() && c != '_')
-                    .any(|t| t == "test")
-        }
-        _ => false,
-    })
-}
+pub use sorobanshield_core::is_cfg_test;
 
 /// Whether the receiver chain of a method call contains a `.storage()` call.
 pub fn receiver_chain_has_storage(mut e: &Expr) -> bool {

@@ -86,7 +86,7 @@ impl Rule for StateTransitionTestSuggestions {
             severity: Some(Severity::Info),
             confidence: Some(Confidence::Low),
             concern: "A public contract function that writes storage is a state transition. If no test in the project appears to call it, regressions in its authorization, arithmetic and sequencing with other transitions go unnoticed.".into(),
-            detection: "Project-wide. Collects public #[contractimpl] functions that write storage (.set / .remove on a .storage() chain), then collects identifiers from test code: #[cfg(test)] modules and #[test] functions, plus whole files that contain #[test] functions but define no contract. It reports each state-changing entrypoint whose name appears in no test code; if the project has no test code at all, it reports one finding listing the entrypoints. Matching is by name, including inside macro arguments such as assert_eq!.".into(),
+            detection: "Project-wide. Collects public #[contractimpl] functions that write storage (.set / .remove on a .storage() chain), then collects identifiers from test code: #[cfg(test)] modules and #[test] functions, plus whole files that contain #[test] functions but define no contract. It reports each state-changing entrypoint whose name appears in no test code; if the project has no test code at all, it reports one finding listing the entrypoints. Matching is by name, including inside macro arguments such as assert_eq!. The __constructor function is not reported because tests start a contract through registration arguments and never name it. Files that a parent declares with #[cfg(test)] mod name; count as test code and contribute no entrypoints.".into(),
             severity_rationale: "Informational: missing tests are a prompt to write tests, not a defect in the contract. Low confidence because matching is by name only, tests in other crates or generated clients under different names are not seen, and a name match does not mean the transition is meaningfully tested.".into(),
             remediation: "Add tests that call the entrypoint as an authorized and an unauthorized caller, exercise boundary values, and cover sequences of transitions that depend on one another (for example initialize, update, then update again).".into(),
             false_positives: vec![
@@ -117,8 +117,18 @@ impl Rule for StateTransitionTestSuggestions {
         let mut any_test_code = false;
 
         for unit in project.files {
-            let fns = contract_entrypoints(&unit.ast.items);
+            let is_test_file = project.test_only.contains(unit.path);
+            let fns = if is_test_file {
+                Vec::new()
+            } else {
+                contract_entrypoints(&unit.ast.items)
+            };
             for f in &fns {
+                // Tests start a contract through registration arguments and never
+                // name `__constructor`, so a name match would always miss it.
+                if f.sig.ident == "__constructor" {
+                    continue;
+                }
                 if !storage_write_spans(&f.block).is_empty() {
                     entrypoints.push((
                         unit.path,
@@ -199,7 +209,19 @@ mod tests {
             .iter()
             .map(|(p, a)| SourceUnit { path: p, ast: a })
             .collect();
-        StateTransitionTestSuggestions.check_project(&ProjectUnit { files: &units })
+        StateTransitionTestSuggestions.check_project(&ProjectUnit {
+            files: &units,
+            test_only: &std::collections::HashSet::new(),
+        })
+    }
+
+    #[test]
+    fn does_not_report_constructor() {
+        let f = run(&[(
+            "src/lib.rs",
+            "use soroban_sdk::*; pub struct C; #[contractimpl] impl C { pub fn __constructor(env: Env) { env.storage().instance().set(&K, &1u32); } }",
+        )]);
+        assert!(f.is_empty(), "{f:?}");
     }
 
     const CONTRACT: &str = "use soroban_sdk::*; pub struct C; #[contractimpl] impl C {\n pub fn set_value(env: Env) { env.storage().instance().set(&K, &1u32); }\n pub fn other(env: Env) { env.storage().instance().remove(&K); }\n pub fn read(env: Env) -> u32 { env.storage().instance().get(&K).unwrap_or(0) } }";

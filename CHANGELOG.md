@@ -5,6 +5,7 @@ All notable user-visible changes are recorded here. The project follows semantic
 ## Unreleased
 
 ### Changed
+- SS-001 and SS-005 no longer report `__constructor`, which runs only at deployment. Files declared with `#[cfg(test)] mod name;` are now treated as test-only: per-file rules skip them, and SS-005 reads them as test code. Found by scanning stellar/soroban-examples; see `docs/limitations.md`.
 - Documentation now has one canonical copy in `docs/`. The website imports it instead of keeping separate copies that had drifted apart (the repository `limitations` and `cli-reference` had newer content than the site, and vice versa). `docs/quickstart.md` and `docs/reports.md` were added.
 
 ### Added

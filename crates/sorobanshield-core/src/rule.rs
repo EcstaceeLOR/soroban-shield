@@ -51,6 +51,9 @@ pub struct ManifestUnit<'a> {
 /// All parsed source files of the project, for rules that need cross-file context.
 pub struct ProjectUnit<'a> {
     pub files: &'a [SourceUnit<'a>],
+    /// Paths of files that are test-only (see `testcode::test_only_files`).
+    /// Per-file rules are not run on them, but they are visible here.
+    pub test_only: &'a std::collections::HashSet<String>,
 }
 
 pub trait Rule: Sync {

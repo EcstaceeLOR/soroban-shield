@@ -6,6 +6,7 @@ pub mod project;
 pub mod report;
 pub mod rule;
 pub mod suppress;
+pub mod testcode;
 
 pub use baseline::{Applied, Baseline, BaselineError};
 pub use config::{Config, ConfigError};
@@ -15,4 +16,5 @@ pub use project::{Project, ProjectError};
 pub use report::Report;
 pub use rule::{ManifestUnit, ProjectUnit, Rule, RuleMeta, RuleStatus, SourceUnit};
 pub use suppress::{Suppression, UnusedSuppression};
+pub use testcode::{is_cfg_test, test_only_files};
 pub use toml;

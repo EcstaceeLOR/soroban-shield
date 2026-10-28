@@ -64,6 +64,7 @@ fn negative_fixtures_are_clean() {
         "negative/protected_write",
         "negative/helper_auth",
         "edge/test_module_ignored",
+        "edge/test_file_ignored",
     ] {
         let o = scan(f, &[]);
         assert_eq!(code(&o), 0, "{f}: {}", out(&o));

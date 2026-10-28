@@ -104,7 +104,7 @@ impl Rule for AuthorizationPathReview {
             severity: Some(Severity::Medium),
             confidence: Some(Confidence::Low),
             concern: "A public contract function writes to contract storage, but no require_auth call is visible in the function or in a same-file helper it calls. Authorization may be missing, or it may be enforced somewhere this rule cannot see.".into(),
-            detection: "Parses each Rust file with syn. In impl blocks annotated #[contractimpl], for each public function it looks for storage writes (a .set(..) or .remove(..) call whose receiver chain contains .storage()) and for require_auth / require_auth_for_args calls. A function is reported when it writes storage, contains no such auth call, and calls no same-file function that does. Items under #[cfg(test)] are skipped.".into(),
+            detection: "Parses each Rust file with syn. In impl blocks annotated #[contractimpl], for each public function it looks for storage writes (a .set(..) or .remove(..) call whose receiver chain contains .storage()) and for require_auth / require_auth_for_args calls. A function is reported when it writes storage, contains no such auth call, and calls no same-file function that does. Items under #[cfg(test)] are skipped, and so is the __constructor function, which runs only at deployment.".into(),
             severity_rationale: "Medium: missing authorization on a storage write can be serious, but this rule only establishes that no auth call is visible, not that authorization is absent. Confidence is low for the same reason, so the finding is a prompt for manual review, not a vulnerability claim.".into(),
             remediation: "Trace every caller of the function. If the write must be restricted, call require_auth() on the relevant Address before it, and add tests for authorized and unauthorized callers. If authorization is enforced elsewhere (for example the function is only reachable through an authorized entrypoint), document that and treat the finding as reviewed.".into(),
             false_positives: vec![
@@ -141,6 +141,10 @@ impl Rule for AuthorizationPathReview {
 
         let mut out = Vec::new();
         for (sig, block) in &c.entrypoints {
+            // `__constructor` runs once at deployment and cannot be invoked afterwards.
+            if sig.ident == "__constructor" {
+                continue;
+            }
             let f = facts(block);
             if f.writes.is_empty() || f.has_auth {
                 continue;
@@ -243,6 +247,12 @@ mod tests {
     #[test]
     fn ignores_non_public_and_non_contract_functions() {
         let f = run(&format!("{HEAD} fn private(env: Env) {{ env.storage().instance().set(&KEY, &1u32); }} }} pub struct D; impl D {{ pub fn x(env: Env) {{ env.storage().instance().set(&KEY, &1u32); }} }}"));
+        assert!(f.is_empty());
+    }
+
+    #[test]
+    fn skips_constructor() {
+        let f = run(&format!("{HEAD} pub fn __constructor(env: Env) {{ env.storage().instance().set(&KEY, &1u32); }} }}"));
         assert!(f.is_empty());
     }
 

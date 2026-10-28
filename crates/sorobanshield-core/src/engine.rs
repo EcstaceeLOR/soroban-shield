@@ -2,6 +2,7 @@ use crate::finding::Finding;
 use crate::project::{Project, ProjectError};
 use crate::rule::{relative_display, ManifestUnit, ProjectUnit, Rule, SourceUnit};
 use crate::suppress::{self, Suppression, UnusedSuppression};
+use crate::testcode;
 use serde::Serialize;
 use std::path::Path;
 
@@ -42,12 +43,23 @@ pub fn scan_project(project: &Project, rules: &[Box<dyn Rule>]) -> ScanOutcome {
         .iter()
         .map(|(path, ast)| SourceUnit { path, ast })
         .collect();
-    for unit in &units {
+    // Test-only files stay in `units` so project-level rules (SS-005) can read
+    // test code, but per-file rules must not report on them.
+    let test_only = testcode::test_only_files(
+        &parsed
+            .iter()
+            .map(|(p, a)| (p.clone(), a))
+            .collect::<Vec<_>>(),
+    );
+    for unit in units.iter().filter(|u| !test_only.contains(u.path)) {
         for rule in rules {
             out.findings.extend(rule.check(unit));
         }
     }
-    let project_unit = ProjectUnit { files: &units };
+    let project_unit = ProjectUnit {
+        files: &units,
+        test_only: &test_only,
+    };
     for rule in rules {
         out.findings.extend(rule.check_project(&project_unit));
     }

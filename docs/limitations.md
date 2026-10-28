@@ -6,6 +6,8 @@ Static analysis cannot prove that a contract is secure. SorobanShield is a heuri
 
 - Analysis is per file and syntactic. Macros are not expanded, types are not resolved, and there is no control-flow or cross-file analysis.
 - Only Rust source and `Cargo.toml` are examined, not compiled WASM.
+- Test code is recognised by `#[cfg(test)]` (inline modules, `#![cfg(test)]` files, and `#[cfg(test)] mod name;` files found by the standard `name.rs` / `name/mod.rs` layout). `#[path = ".."]` is not followed, so such a test file is analysed like normal source. Test-only files are not reported on, but SS-005 reads them as test code.
+- `__constructor` is skipped by SS-001 and SS-005 because it runs only at deployment. A constructor that should enforce a deployer check is therefore not examined.
 - A clean scan means only that the implemented checks reported nothing.
 - Six rules (SS-001 to SS-006) are implemented. SS-004, SS-005 and SS-006 are informational prompts about error design, tests and project metadata, not security-defect detectors.
 
@@ -73,3 +75,9 @@ Static analysis cannot prove that a contract is secure. SorobanShield is a heuri
 ## Use it alongside
 
 Unit and property tests, manual review, threat modelling and, for contracts that hold real value, an independent audit.
+
+## Trial on real code
+
+The scanner was run on [stellar/soroban-examples](https://github.com/stellar/soroban-examples) at commit `03d42aa` (32 independent projects, 117 Rust files). Every file parsed without error. Before the changes recorded in the changelog for `__constructor` and out-of-line test modules, the scan reported 114 findings (SS-001 19, SS-002 8, SS-003 9, SS-004 28, SS-005 10, SS-006 40); afterwards it reported 95 (SS-001 10, SS-002 6, SS-003 9, SS-004 26, SS-005 4, SS-006 40). Most remaining SS-001 findings are tutorial counters whose `increment` is intentionally open, which is the false-positive class listed above.
+
+This is a check that the scanner handles real syntax and a source of false-positive classes. It is **not** a measurement of accuracy: these are teaching examples, not audited production contracts, nobody triaged every finding for true positives, and the same projects informed the two fixes.
