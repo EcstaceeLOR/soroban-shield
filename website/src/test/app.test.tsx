@@ -238,7 +238,7 @@ describe('roadmap honesty', () => {
     const item = (title: string) => screen.getByRole('heading', { name: title }).closest('li')!
     expect(within(item('Baseline support')).getByText('done')).toBeInTheDocument()
     expect(within(item('SARIF output')).getByText('done')).toBeInTheDocument()
-    expect(within(item('SARIF output')).getByText(/not in CI/i)).toBeInTheDocument()
+    expect(within(item('SARIF output')).getByText(/validated against the official schema in CI/i)).toBeInTheDocument()
     expect(within(item('Configuration file')).getByText('done')).toBeInTheDocument()
     expect(within(item('First tagged release')).getByText('planned')).toBeInTheDocument()
     expect(within(item('JSON report and exit codes')).getByText('done')).toBeInTheDocument()
