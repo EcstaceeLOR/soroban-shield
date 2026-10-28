@@ -17,7 +17,7 @@ export default function Home() {
   const plannedCount = rules.length - implemented.length
   return (
     <>
-      <section className="border-b border-ink-700 bg-gradient-to-b from-ink-900 to-ink-950">
+      <section className="hero-bg border-b border-ink-700">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 lg:grid-cols-2">
           <div>
             <p className="font-mono text-sm text-accent">Early-stage · open source · runs locally</p>
@@ -27,11 +27,23 @@ export default function Home() {
             <p className="mt-5 text-lg text-slate-300">
               SorobanShield is intended to help Soroban developers identify code patterns that deserve closer review. It does not prove a contract is secure.
             </p>
+            <dl className="mt-8 grid max-w-md grid-cols-3 gap-4 border-t border-ink-700 pt-5 text-sm">
+              {[
+                [String(implemented.length), 'implemented rules'],
+                ['3', 'report formats'],
+                ['0', 'network calls'],
+              ].map(([v, l]) => (
+                <div key={l}>
+                  <dd className="font-mono text-2xl font-bold text-white">{v}</dd>
+                  <dt className="text-slate-400">{l}</dt>
+                </div>
+              ))}
+            </dl>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/docs/quickstart" className="rounded-md bg-accent px-5 py-2.5 font-semibold text-ink-950 hover:bg-accent-dim">
+              <Link to="/docs/quickstart" className="btn-primary">
                 Get Started
               </Link>
-              <Link to="/rules" className="rounded-md border border-ink-600 px-5 py-2.5 font-semibold text-white hover:bg-ink-800">
+              <Link to="/rules" className="btn-secondary">
                 Explore Security Rules
               </Link>
             </div>
@@ -54,7 +66,7 @@ export default function Home() {
           <h2 id="how" className="text-2xl font-bold text-white">How it works</h2>
           <ol className="mt-6 grid gap-4 md:grid-cols-4">
             {steps.map(([t, d], i) => (
-              <li key={t} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
+              <li key={t} className="card">
                 <span className="font-mono text-sm text-accent">0{i + 1}</span>
                 <h3 className="mt-1 font-semibold text-white">{t}</h3>
                 <p className="mt-1 text-sm text-slate-300">{d}</p>
@@ -69,10 +81,10 @@ export default function Home() {
           <ul className="mt-6 grid gap-4 md:grid-cols-3">
             {[
               ['Local CLI', 'Scans a project directory from the terminal. No network access, no telemetry, no project code is executed.'],
-              ['Text and JSON reports', 'Readable terminal output and a stable JSON schema, with documented exit codes for CI.'],
-              ['Tested rule', 'One implemented rule with positive, negative and edge-case fixtures, and documented false positives and negatives.'],
+              ['Text, JSON and SARIF', 'Readable terminal output, a versioned JSON schema and SARIF 2.1.0, with documented exit codes for CI.'],
+              ['Tested rules', `${implemented.length} implemented rules, each with positive, negative and edge-case fixtures and documented false positives and negatives.`],
             ].map(([t, d]) => (
-              <li key={t} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
+              <li key={t} className="card">
                 <h3 className="font-semibold text-white">{t}</h3>
                 <p className="mt-1 text-sm text-slate-300">{d}</p>
               </li>
@@ -85,7 +97,7 @@ export default function Home() {
           <h2 id="catalog" className="text-2xl font-bold text-white">Implemented security rules</h2>
           <ul className="mt-6 space-y-3">
             {implemented.map((r) => (
-              <li key={r.id} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
+              <li key={r.id} className="card">
                 <div className="flex flex-wrap items-center gap-2">
                   <Link to={`/rules/${r.id}`} className="font-mono font-semibold text-accent hover:underline">{r.id}</Link>
                   <span className="font-semibold text-white">{r.name}</span>
@@ -125,7 +137,7 @@ export default function Home() {
               ['/docs/cli-reference', 'CLI reference'],
               ['/docs/limitations', 'Limitations'],
             ].map(([to, label]) => (
-              <li key={to}><Link to={to} className="block rounded-lg border border-ink-700 bg-ink-900 p-4 font-semibold text-white hover:border-accent">{label}</Link></li>
+              <li key={to}><Link to={to} className="card block font-semibold text-white">{label}</Link></li>
             ))}
           </ul>
         </section>

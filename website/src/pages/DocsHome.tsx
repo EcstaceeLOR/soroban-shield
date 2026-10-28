@@ -9,7 +9,7 @@ export default function DocsHome() {
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
         {docPages.map((d) => (
           <li key={d.slug}>
-            <Link to={`/docs/${d.slug}`} className="block h-full rounded-lg border border-ink-700 bg-ink-900 p-4 hover:border-accent">
+            <Link to={`/docs/${d.slug}`} className="block h-full card hover:border-accent">
               <span className="font-semibold text-white">{d.title}</span>
               <span className="mt-1 block text-sm text-slate-400">{d.summary}</span>
             </Link>

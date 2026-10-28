@@ -2,9 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .card { @apply rounded-lg border border-ink-700 bg-ink-900 p-4 transition-colors duration-150; }
+  a.card:hover, li.card:hover { @apply border-ink-600 bg-ink-800/70; }
+  a.card:hover { @apply border-accent/60; }
+  .btn { @apply inline-flex items-center justify-center rounded-md px-5 py-2.5 font-semibold transition-colors duration-150; }
+  .btn-primary { @apply btn bg-accent text-ink-950 hover:bg-accent-dim; }
+  .btn-secondary { @apply btn border border-ink-600 text-white hover:border-accent/60 hover:bg-ink-800; }
+  .hero-bg {
+    background-image:
+      radial-gradient(60rem 28rem at 70% -10%, rgb(94 234 212 / 0.10), transparent 60%),
+      linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px);
+    background-size: auto, 40px 40px, 40px 40px;
+  }
+}
+
 :root { color-scheme: dark; }
 * { scrollbar-color: #334155 #0f172a; }
 html { scroll-behavior: smooth; }
+::selection { @apply bg-accent/30 text-white; }
 body { @apply bg-ink-950 text-slate-200 font-sans antialiased; }
 :focus-visible { @apply outline outline-2 outline-offset-2 outline-accent; }
 
@@ -27,6 +44,8 @@ body { @apply bg-ink-950 text-slate-200 font-sans antialiased; }
 .doc table { @apply w-full text-sm my-4 border-collapse block overflow-x-auto; }
 .doc th, .doc td { @apply border border-ink-700 px-3 py-2 text-left align-top; }
 .doc th { @apply bg-ink-800 text-white; }
+.doc tbody tr:nth-child(even) { @apply bg-ink-900/60; }
+.doc h2 { @apply border-b border-ink-700 pb-2; }
 .doc td:first-child code { @apply whitespace-nowrap; }
 
 @keyframes caret { 50% { opacity: 0; } }

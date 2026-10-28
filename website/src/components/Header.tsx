@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { NAV_LINKS, REPO_URL } from '../lib/site'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded px-2 py-1 text-sm ${isActive ? 'text-accent' : 'text-slate-300 hover:text-white'}`
+  `rounded border-b-2 px-2 py-1 text-sm transition-colors ${isActive ? 'border-accent text-white' : 'border-transparent text-slate-300 hover:text-white'}`
 
 export function Header() {
   const { pathname } = useLocation()
@@ -38,7 +38,7 @@ export function Header() {
           <a href={REPO_URL} className="rounded px-2 py-1 text-sm text-slate-300 hover:text-white">
             GitHub
           </a>
-          <Link to="/docs/quickstart" className="ml-2 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-ink-950 hover:bg-accent-dim">
+          <Link to="/docs/quickstart" className="ml-2 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-ink-950 transition-colors hover:bg-accent-dim">
             Get Started
           </Link>
         </nav>

@@ -27,7 +27,7 @@ export default function Roadmap() {
     <Page title="Roadmap" lead="Status of each milestone. Nothing is marked done without code and tests behind it.">
       <ul className="space-y-3">
         {items.map((i) => (
-          <li key={i.title} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
+          <li key={i.title} className="card">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${style[i.state]}`}>{i.state}</span>
               <h2 className="font-semibold text-white">{i.title}</h2>

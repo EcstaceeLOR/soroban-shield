@@ -31,7 +31,7 @@ export default function Features() {
       <Section title="Implemented">
         <ul className="space-y-3">
           {implemented.map(([t, d]) => (
-            <li key={t} className="rounded-lg border border-ink-700 bg-ink-900 p-4">
+            <li key={t} className="card">
               <span className="mr-2 rounded-full border border-emerald-500/50 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">implemented</span>
               <span className="font-semibold text-white">{t}</span>
               <p className="mt-1 text-sm">{d}</p>

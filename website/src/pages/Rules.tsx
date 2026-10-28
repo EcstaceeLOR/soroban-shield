@@ -68,7 +68,7 @@ export default function Rules() {
       ) : (
         <ul className="mt-6 space-y-3">
           {shown.map((r) => (
-            <li key={r.id} className="rounded-lg border border-ink-700 bg-ink-900 p-4" data-testid={`rule-${r.id}`}>
+            <li key={r.id} className="card" data-testid={`rule-${r.id}`}>
               <div className="flex flex-wrap items-center gap-2">
                 <Link to={`/rules/${r.id}`} className="font-mono font-semibold text-accent hover:underline">{r.id}</Link>
                 <span className="font-semibold text-white">{r.name}</span>

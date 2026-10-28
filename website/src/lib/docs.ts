@@ -20,7 +20,7 @@ export const docPages: DocPage[] = [
   { slug: 'quickstart', title: 'Quickstart', summary: 'Run a first scan against repository fixtures.', body: quickstart },
   { slug: 'cli-reference', title: 'CLI reference', summary: 'Commands, options and exit codes.', body: cliReference },
   { slug: 'configuration', title: 'Configuration', summary: 'What can be configured today (flags only).', body: configuration },
-  { slug: 'reports', title: 'Reports', summary: 'Text and JSON output formats.', body: reports },
+  { slug: 'reports', title: 'Reports', summary: 'Text, JSON and SARIF output formats.', body: reports },
   { slug: 'rules', title: 'Rule authoring', summary: 'How to implement, test and document a rule.', body: rules },
   { slug: 'ci-integration', title: 'CI integration', summary: 'Exit codes in CI, with untested illustrative steps.', body: ciIntegration },
   { slug: 'security-model', title: 'Security model', summary: 'Privacy, trust boundaries and disclosure.', body: securityModel },
