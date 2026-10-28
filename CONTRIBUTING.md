@@ -30,6 +30,10 @@ Follow [docs/rule-authoring.md](docs/rule-authoring.md). In short: a stable ID, 
 
 Edit the Markdown in `docs/`; the website renders those files directly, so there is no second copy to update. Link between documents as `other-doc.md`, and to repository files as `../path`.
 
+## Releases
+
+See [docs/releasing.md](docs/releasing.md).
+
 ## Conduct and security
 
 See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Be respectful and assume good faith. Report vulnerabilities in SorobanShield privately; see [SECURITY.md](SECURITY.md).
