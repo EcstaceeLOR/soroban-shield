@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use sorobanshield_core::{discover_and_scan, Baseline, Config, Report, RuleMeta, Severity};
+use sorobanshield_core::{
+    discover_and_scan, discover_and_scan_all, Baseline, Config, Report, RuleMeta, Severity,
+};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -38,9 +40,12 @@ enum ScanFormat {
 enum Command {
     /// Scan a Soroban project directory
     Scan {
-        /// Project root containing Cargo.toml
+        /// Project root containing Cargo.toml (or, with --recursive, a directory containing projects)
         #[arg(default_value = ".")]
         path: PathBuf,
+        /// Scan every Soroban project below PATH instead of requiring PATH to be one. Report paths stay relative to PATH
+        #[arg(long)]
+        recursive: bool,
         #[arg(long, value_enum, default_value = "text")]
         format: ScanFormat,
         /// Exit with code 1 when a finding has at least this severity (info, low, medium, high, critical).
@@ -88,6 +93,7 @@ fn main() -> ExitCode {
     ExitCode::from(match cli.command {
         Command::Scan {
             path,
+            recursive,
             format,
             fail_on,
             config,
@@ -95,6 +101,7 @@ fn main() -> ExitCode {
             write_baseline,
         } => scan(ScanArgs {
             path,
+            recursive,
             format,
             fail_on,
             config,
@@ -112,6 +119,7 @@ fn main() -> ExitCode {
 
 struct ScanArgs {
     path: PathBuf,
+    recursive: bool,
     format: ScanFormat,
     fail_on: Option<Severity>,
     config: Option<PathBuf>,
@@ -122,6 +130,7 @@ struct ScanArgs {
 fn scan(args: ScanArgs) -> u8 {
     let ScanArgs {
         path,
+        recursive,
         format,
         fail_on,
         config,
@@ -156,7 +165,13 @@ fn scan(args: ScanArgs) -> u8 {
         .into_iter()
         .filter(|r| !cfg.rules.disable.contains(&r.meta().id))
         .collect();
-    let (_project, mut outcome) = match discover_and_scan(&path, &cfg.scan.exclude, &rules) {
+    let scanned = if recursive {
+        discover_and_scan_all(&path, &cfg.scan.exclude, &rules)
+    } else {
+        discover_and_scan(&path, &cfg.scan.exclude, &rules)
+            .map(|(_, outcome)| (vec![String::new()], outcome))
+    };
+    let (projects, mut outcome) = match scanned {
         Ok(v) => v,
         Err(e) => {
             eprintln!("error: {e}");
@@ -179,6 +194,10 @@ fn scan(args: ScanArgs) -> u8 {
         ids,
         outcome,
     );
+    report.scan.projects = projects
+        .into_iter()
+        .map(|p| if p.is_empty() { ".".into() } else { p })
+        .collect();
     report.scan.config_file = config_shown;
     report.scan.exclude = cfg.scan.exclude.clone();
     report.scan.disabled_rules = cfg.rules.disable.clone();

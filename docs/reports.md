@@ -28,6 +28,7 @@ Run `sorobanshield scan . --format json`. Key order is fixed and the output is d
 | `tool` | object | `name` and `version`. |
 | `scan.root` | string | The path you passed. |
 | `scan.files_scanned` | number | Files parsed successfully. |
+| `scan.projects` | string[] | Project directories scanned, relative to `scan.root`; `.` is the root itself. More than one only with `--recursive`. |
 | `scan.rules_run` | string[] | IDs of rules that ran. |
 | `scan.config_file` | string or null | Config file that was applied, if any. |
 | `scan.exclude` | string[] | Path prefixes excluded by configuration. |

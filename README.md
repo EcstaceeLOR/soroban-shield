@@ -43,6 +43,7 @@ cargo build --release
 sorobanshield scan .                       # human-readable report
 sorobanshield scan . --format json         # machine-readable report (schema v1)
 sorobanshield scan . --format sarif        # SARIF 2.1.0 for code-scanning tools
+sorobanshield scan examples --recursive    # every Soroban project below a directory
 sorobanshield scan . --fail-on medium      # only exit 1 for medium or higher findings
 sorobanshield scan . --config ci.toml      # use an explicit config file (see docs/configuration.md)
 sorobanshield scan . --write-baseline b.json   # record current findings

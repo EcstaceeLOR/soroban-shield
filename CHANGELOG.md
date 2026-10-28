@@ -11,6 +11,7 @@ All notable user-visible changes are recorded here. The project follows semantic
 - Documentation now has one canonical copy in `docs/`. The website imports it instead of keeping separate copies that had drifted apart (the repository `limitations` and `cli-reference` had newer content than the site, and vice versa). `docs/quickstart.md` and `docs/reports.md` were added.
 
 ### Added
+- `sorobanshield scan PATH --recursive` scans every Soroban project below `PATH` and merges the results. Report paths stay relative to `PATH`, and the JSON report gains `scan.projects`. A broken manifest or no project at all fails the scan with exit 3.
 - `CODE_OF_CONDUCT.md`, a pull-request template and issue templates (bug report, rule proposal).
 - CI `audit` job (`cargo audit` and `npm audit --omit=dev --audit-level=high`); not yet observed running on GitHub.
 - `sorobanshield scan [PATH]` with `--format text|json` and `--fail-on <severity>`.

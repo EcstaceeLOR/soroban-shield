@@ -768,3 +768,64 @@ fn text_report_lists_suppressions_and_unused_warnings() {
         "{t}"
     );
 }
+
+#[test]
+fn recursive_scans_every_project_with_paths_relative_to_the_root() {
+    let o = scan("multi", &["--recursive"]);
+    assert_eq!(code(&o), 1, "{}", out(&o));
+    let t = out(&o);
+    assert!(t.contains("projects: alpha, beta"), "{t}");
+    assert!(t.contains("at alpha/src/lib.rs:10"), "{t}");
+    assert!(!t.contains("beta/src"), "{t}");
+}
+
+#[test]
+fn recursive_json_lists_the_projects_and_merges_the_counts() {
+    let o = scan("multi", &["--recursive", "--format", "json"]);
+    assert_eq!(code(&o), 1);
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    assert_eq!(v["scan"]["projects"], serde_json::json!(["alpha", "beta"]));
+    assert_eq!(v["scan"]["files_scanned"], 4);
+    assert_eq!(v["summary"]["total"], 1);
+    assert_eq!(v["findings"][0]["file"], "alpha/src/lib.rs");
+}
+
+#[test]
+fn recursive_on_a_single_project_reports_it_as_the_root() {
+    let o = scan(
+        "positive/unprotected_write",
+        &["--recursive", "--format", "json"],
+    );
+    assert_eq!(code(&o), 1);
+    let v: serde_json::Value = serde_json::from_str(&out(&o)).unwrap();
+    assert_eq!(v["scan"]["projects"], serde_json::json!(["."]));
+    assert_eq!(v["findings"][0]["file"], "src/lib.rs");
+}
+
+#[test]
+fn without_recursive_a_directory_of_projects_is_refused_with_a_hint() {
+    let o = scan("multi", &[]);
+    assert_eq!(code(&o), 3);
+    assert!(String::from_utf8_lossy(&o.stderr).contains("--recursive"));
+}
+
+#[test]
+fn recursive_with_no_soroban_project_fails() {
+    let o = scan("multi/tools", &["--recursive"]);
+    assert_eq!(code(&o), 3);
+    assert!(String::from_utf8_lossy(&o.stderr).contains("no Soroban project found"));
+}
+
+#[test]
+fn recursive_never_skips_a_broken_project_silently() {
+    let o = scan("multi_broken", &["--recursive"]);
+    assert_eq!(code(&o), 3, "{}", out(&o));
+    assert!(String::from_utf8_lossy(&o.stderr).contains("malformed manifest"));
+}
+
+#[test]
+fn recursive_sarif_uses_prefixed_paths() {
+    let o = scan("multi", &["--recursive", "--format", "sarif"]);
+    assert_eq!(code(&o), 1);
+    assert!(out(&o).contains("alpha/src/lib.rs"));
+}

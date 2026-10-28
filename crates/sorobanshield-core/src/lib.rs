@@ -10,9 +10,9 @@ pub mod testcode;
 
 pub use baseline::{Applied, Baseline, BaselineError};
 pub use config::{Config, ConfigError};
-pub use engine::{discover_and_scan, scan_project, ScanError, ScanOutcome};
+pub use engine::{discover_and_scan, discover_and_scan_all, scan_project, ScanError, ScanOutcome};
 pub use finding::{Confidence, Finding, Severity};
-pub use project::{Project, ProjectError};
+pub use project::{discover_projects, Project, ProjectError};
 pub use report::Report;
 pub use rule::{ManifestUnit, ProjectUnit, Rule, RuleMeta, RuleStatus, SourceUnit};
 pub use suppress::{Suppression, UnusedSuppression};

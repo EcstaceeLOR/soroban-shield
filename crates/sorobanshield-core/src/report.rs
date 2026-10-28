@@ -19,6 +19,9 @@ pub struct Tool {
 pub struct ScanInfo {
     pub root: String,
     pub files_scanned: usize,
+    /// Project directories scanned, relative to `root`; `.` is the root itself.
+    /// More than one only with `--recursive`.
+    pub projects: Vec<String>,
     pub rules_run: Vec<String>,
     /// Path of the configuration file that was applied, if any.
     pub config_file: Option<String>,
@@ -74,6 +77,7 @@ impl Report {
             scan: ScanInfo {
                 root: root.to_string(),
                 files_scanned: outcome.files_scanned,
+                projects: vec![".".to_string()],
                 rules_run,
                 config_file: None,
                 exclude: Vec::new(),
@@ -211,6 +215,9 @@ impl Report {
             self.scan.files_scanned,
             self.scan.rules_run.len()
         );
+        if self.scan.projects.len() > 1 {
+            let _ = writeln!(s, "projects: {}", self.scan.projects.join(", "));
+        }
         if let Some(c) = &self.scan.config_file {
             let _ = writeln!(
                 s,

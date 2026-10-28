@@ -32,6 +32,7 @@ Scans a Soroban project. `PATH` defaults to `.` and must be a project root conta
 | `--fail-on` | `info`, `low`, `medium`, `high`, `critical` | `low` (or `fail_on` from the config file) | Exit `1` when any finding has at least this severity. The flag overrides the config file. |
 | `--baseline` | file path | none | Hide findings recorded in a baseline file; see [Reports](reports.md#baselines). |
 | `--write-baseline` | file path | none | Record current findings to a baseline file; exits `0` if the scan completed. Cannot be combined with `--baseline`. |
+| `--recursive` | flag | off | Scan every Soroban project below `PATH` instead of requiring `PATH` itself to be one. Each project is analysed on its own and reported paths stay relative to `PATH` (for example `alpha/src/lib.rs`). A directory that is already a project, such as a workspace root, is one project and is not searched further. `target`, `node_modules`, `.git`, `vendor`, `dist`, `build` and configured excludes are skipped. A project whose manifest cannot be read or parsed fails the scan (exit `3`) rather than being skipped, and finding no project is also exit `3`. |
 | `--config` | file path | `<PATH>/sorobanshield.toml` if it exists | Configuration file; see [Configuration](configuration.md). |
 
 Errors are written to stderr. With `--format json`, stdout contains only the JSON document.
@@ -40,6 +41,7 @@ Errors are written to stderr. With `--format json`, stdout contains only the JSO
 sorobanshield scan .
 sorobanshield scan . --format json
 sorobanshield scan . --fail-on high
+sorobanshield scan path/to/examples --recursive
 ```
 
 ## `sorobanshield rules list [--format text|json]`

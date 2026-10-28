@@ -1,5 +1,5 @@
 use crate::finding::Finding;
-use crate::project::{Project, ProjectError};
+use crate::project::{discover_projects, Project, ProjectError};
 use crate::rule::{relative_display, ManifestUnit, ProjectUnit, Rule, SourceUnit};
 use crate::suppress::{self, Suppression, UnusedSuppression};
 use crate::testcode;
@@ -100,4 +100,60 @@ pub fn discover_and_scan(
     let project = Project::discover_with(root, exclude)?;
     let outcome = scan_project(&project, rules);
     Ok((project, outcome))
+}
+
+/// Scans every Soroban project below `root` and merges the results into one
+/// outcome. Each project is analyzed on its own, exactly as `discover_and_scan`
+/// would, and its file paths are prefixed with the project's directory so they
+/// stay relative to `root`. `exclude` entries are relative to `root`.
+pub fn discover_and_scan_all(
+    root: &Path,
+    exclude: &[String],
+    rules: &[Box<dyn Rule>],
+) -> Result<(Vec<String>, ScanOutcome), ProjectError> {
+    let projects = discover_projects(root, exclude)?;
+    let mut merged = ScanOutcome::default();
+    for dir in &projects {
+        let nested: Vec<String> = exclude
+            .iter()
+            .filter_map(|x| {
+                if dir.is_empty() {
+                    Some(x.clone())
+                } else {
+                    x.strip_prefix(&format!("{dir}/")).map(str::to_string)
+                }
+            })
+            .collect();
+        let path = if dir.is_empty() {
+            root.to_path_buf()
+        } else {
+            root.join(dir)
+        };
+        let (_, mut outcome) = discover_and_scan(&path, &nested, rules)?;
+        if !dir.is_empty() {
+            let prefix = |f: &mut String| *f = format!("{dir}/{f}");
+            outcome
+                .findings
+                .iter_mut()
+                .for_each(|x| prefix(&mut x.file));
+            outcome.errors.iter_mut().for_each(|x| prefix(&mut x.file));
+            outcome
+                .suppressed
+                .iter_mut()
+                .for_each(|x| prefix(&mut x.file));
+            outcome
+                .unused_suppressions
+                .iter_mut()
+                .for_each(|x| prefix(&mut x.file));
+        }
+        merged.files_scanned += outcome.files_scanned;
+        merged.findings.extend(outcome.findings);
+        merged.errors.extend(outcome.errors);
+        merged.suppressed.extend(outcome.suppressed);
+        merged
+            .unused_suppressions
+            .extend(outcome.unused_suppressions);
+    }
+    merged.findings.sort_by_key(|f| f.sort_key());
+    Ok((projects, merged))
 }
