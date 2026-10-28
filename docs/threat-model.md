@@ -22,3 +22,13 @@ The scanned project is **untrusted input**. SorobanShield treats every file in i
 ## Out of scope
 
 Compiled WASM, runtime behavior, economic attacks, and anything outside the parsed Rust source.
+
+## What it does not do
+
+- It does not prove a contract is secure, and a clean scan is not a safety claim.
+- It has not been independently audited. No security review of SorobanShield itself has been performed.
+- Remote scanning and hosted dashboards do not exist. Any future feature that handles source code remotely needs a documented threat model and privacy review before release.
+
+## Reporting a vulnerability
+
+Do not open a public issue with exploit details. Follow the process in [SECURITY.md](../SECURITY.md).

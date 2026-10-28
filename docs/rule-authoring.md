@@ -35,3 +35,18 @@ Each fixture is a tiny Soroban project (a `Cargo.toml` declaring `soroban-sdk` a
 ## IDs and status
 
 Rule IDs are stable and never reused. Statuses are `planned`, `experimental`, `implemented` and `deprecated`; the catalog is derived from the registered rules, so every rule currently listed is `implemented`.
+
+## Severity and confidence
+
+Severity is potential impact. Confidence is how likely the pattern is to be relevant. A pattern that deserves review is not automatically a vulnerability, so prefer low confidence and clear limitations over overstated claims.
+
+## Website sync
+
+The rule catalog on the website is generated from the CLI, so it cannot drift from the code:
+
+```bash
+cd website
+npm run gen:rules
+```
+
+A rule appears in the catalog as **implemented** only after it is registered and tested.

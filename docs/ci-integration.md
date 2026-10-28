@@ -1,16 +1,34 @@
 # CI integration
 
-This repository's own workflow is `.github/workflows/ci.yml` (rustfmt, clippy, tests, website lint/typecheck/test/build). Its first run on `main` passed.
+> **Status: untested.** The steps below follow from the documented exit codes. They have not been run in CI against a real project, and no prebuilt binary exists, so a CI job must build the tool from source. (This repository's own workflow, which checks SorobanShield itself, has run successfully.)
 
-To gate a project on SorobanShield you need the binary in CI. Since no release exists, build it from source in the job. The following is an untested sketch:
+## How the exit codes map to CI
 
-```yaml
-- uses: dtolnay/rust-toolchain@stable
-- run: cargo install --git https://github.com/Sorobanshield/soroban-shield sorobanshield --locked
-- run: sorobanshield scan . --fail-on medium
+- `0` passes the job.
+- `1` fails the job because a finding reached the `--fail-on` severity.
+- `2` or `3` also fail the job: the command was invalid or the scan could not be completed. A scan that could not analyze the project never exits `0`.
+
+## Illustrative shell steps
+
+Run these in any CI system that has a Rust toolchain. They are not a verified workflow.
+
+```bash
+git clone https://github.com/Sorobanshield/soroban-shield.git sorobanshield-src
+cargo build --release --manifest-path sorobanshield-src/Cargo.toml
+./sorobanshield-src/target/release/sorobanshield scan . --fail-on medium
 ```
 
-Exit code 1 fails the job when findings meet the threshold; exit code 3 also fails it, so a scan that could not run is never mistaken for a clean one. Use `--format json` to store the report as an artifact.
+To keep the report as an artifact, use JSON output and keep the exit code:
+
+```bash
+./sorobanshield-src/target/release/sorobanshield scan . --format json > sorobanshield-report.json
+```
+
+## Cautions
+
+- Pick `--fail-on` deliberately. SS-001 findings are medium severity and low confidence: review prompts, not confirmed bugs.
+- Pin the SorobanShield revision you build so results are reproducible.
+- A passing job means only that the implemented checks reported nothing.
 
 ## Uploading SARIF to GitHub code scanning (untested sketch)
 

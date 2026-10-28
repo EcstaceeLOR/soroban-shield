@@ -26,6 +26,10 @@ For the website: `cd website && npm ci && npm run lint && npm run typecheck && n
 
 Follow [docs/rule-authoring.md](docs/rule-authoring.md). In short: a stable ID, syntax-aware detection, positive and negative fixtures, edge cases, documented false positives and negatives, and a catalog entry. A rule is only labelled `implemented` once all of that exists and it is registered in `active_rules()`.
 
+## Documentation
+
+Edit the Markdown in `docs/`; the website renders those files directly, so there is no second copy to update. Link between documents as `other-doc.md`, and to repository files as `../path`.
+
 ## Conduct and security
 
-Be respectful and assume good faith. Report vulnerabilities in SorobanShield privately; see [SECURITY.md](SECURITY.md).
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Be respectful and assume good faith. Report vulnerabilities in SorobanShield privately; see [SECURITY.md](SECURITY.md).

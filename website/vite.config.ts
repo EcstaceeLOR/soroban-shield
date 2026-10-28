@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => ({
   // Set VITE_BASE (e.g. /soroban-shield/) when hosting under a sub-path.
   base: loadEnv(mode, '.', 'VITE_').VITE_BASE ?? '/',
   plugins: [react()],
+  // Docs are imported from the repository-level docs/ directory.
+  server: { fs: { allow: ['..'] } },
   test: {
     environment: 'jsdom',
     globals: true,

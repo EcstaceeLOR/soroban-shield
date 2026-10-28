@@ -1,12 +1,15 @@
-import installation from '../content/docs/installation.md?raw'
-import quickstart from '../content/docs/quickstart.md?raw'
-import cliReference from '../content/docs/cli-reference.md?raw'
-import configuration from '../content/docs/configuration.md?raw'
-import reports from '../content/docs/reports.md?raw'
-import rules from '../content/docs/rules.md?raw'
-import ciIntegration from '../content/docs/ci-integration.md?raw'
-import securityModel from '../content/docs/security-model.md?raw'
-import limitations from '../content/docs/limitations.md?raw'
+import installation from '../../../docs/installation.md?raw'
+import quickstart from '../../../docs/quickstart.md?raw'
+import cliReference from '../../../docs/cli-reference.md?raw'
+import configuration from '../../../docs/configuration.md?raw'
+import reports from '../../../docs/reports.md?raw'
+import rules from '../../../docs/rule-authoring.md?raw'
+import ciIntegration from '../../../docs/ci-integration.md?raw'
+import securityModel from '../../../docs/threat-model.md?raw'
+import limitations from '../../../docs/limitations.md?raw'
+
+// The Markdown sources live in the repository's docs/ directory, which is the single
+// canonical copy shared by GitHub and this site.
 
 export interface DocPage {
   slug: string
@@ -26,3 +29,17 @@ export const docPages: DocPage[] = [
   { slug: 'security-model', title: 'Security model', summary: 'Privacy, trust boundaries and disclosure.', body: securityModel },
   { slug: 'limitations', title: 'Limitations', summary: 'False positives, false negatives and scope.', body: limitations },
 ]
+
+// Maps a repository docs/ file name to the website route slug, so relative
+// links between documents keep working on the site.
+export const docFileSlugs: Record<string, string> = {
+  'installation.md': 'installation',
+  'quickstart.md': 'quickstart',
+  'cli-reference.md': 'cli-reference',
+  'configuration.md': 'configuration',
+  'reports.md': 'reports',
+  'rule-authoring.md': 'rules',
+  'ci-integration.md': 'ci-integration',
+  'threat-model.md': 'security-model',
+  'limitations.md': 'limitations',
+}

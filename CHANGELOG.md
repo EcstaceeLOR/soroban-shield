@@ -4,7 +4,12 @@ All notable user-visible changes are recorded here. The project follows semantic
 
 ## Unreleased
 
+### Changed
+- Documentation now has one canonical copy in `docs/`. The website imports it instead of keeping separate copies that had drifted apart (the repository `limitations` and `cli-reference` had newer content than the site, and vice versa). `docs/quickstart.md` and `docs/reports.md` were added.
+
 ### Added
+- `CODE_OF_CONDUCT.md`, a pull-request template and issue templates (bug report, rule proposal).
+- CI `audit` job (`cargo audit` and `npm audit --omit=dev --audit-level=high`); not yet observed running on GitHub.
 - `sorobanshield scan [PATH]` with `--format text|json` and `--fail-on <severity>`.
 - `sorobanshield rules list` and `sorobanshield rules explain <ID>`, each with `--format json`.
 - Project discovery: requires a `Cargo.toml`, requires a `soroban-sdk` dependency in some manifest, skips `target`, `node_modules`, `.git`, `vendor`, `dist` and `build`.

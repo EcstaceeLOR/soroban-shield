@@ -1,6 +1,6 @@
 # Quickstart
 
-This walks through a first scan using a fixture project that ships in the repository. You need a [built binary](/docs/installation).
+This walks through a first scan using a fixture project that ships in the repository. You need a [built binary](installation.md).
 
 ## 1. Scan a fixture that should produce a finding
 
@@ -27,7 +27,7 @@ The output says `No findings reported by the implemented checks.` and the exit c
 ./target/release/sorobanshield scan tests/fixtures/positive/unprotected_write --format json
 ```
 
-The JSON format is described in [Reports](/docs/reports).
+The JSON format is described in [Reports](reports.md).
 
 ## 4. Scan your own contract
 
@@ -35,7 +35,7 @@ The JSON format is described in [Reports](/docs/reports).
 ./target/release/sorobanshield scan path/to/your/contract
 ```
 
-Treat each finding as a prompt to review the code, then confirm with tests and a human review. Read the [limitations](/docs/limitations) first.
+Treat each finding as a prompt to review the code, then confirm with tests and a human review. Read the [limitations](limitations.md) first.
 
 ## 5. Learn about a rule
 

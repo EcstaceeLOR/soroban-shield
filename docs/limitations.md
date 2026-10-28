@@ -1,6 +1,6 @@
 # Limitations
 
-SorobanShield is a heuristic review aid. It can miss real problems and can flag safe code.
+Static analysis cannot prove that a contract is secure. SorobanShield is a heuristic review aid: it can miss real problems and can flag safe code.
 
 ## General
 
@@ -69,3 +69,7 @@ SorobanShield is a heuristic review aid. It can miss real problems and can flag 
 - Configuration supports path-prefix exclusions and disabling whole rules only. There are no globs. Inline `sorobanshield-ignore` comments hide findings on Rust source lines (see the CLI reference); manifest and project-wide findings can only be disabled by rule or baselined. Baselines can hide recorded findings but say nothing about whether they were reviewed; a baseline entry matches on rule, file and message, so a message change (for example a renamed function) resurfaces the finding.
 - No limits on input size are enforced.
 - Tested only on Linux with Rust 1.99.
+
+## Use it alongside
+
+Unit and property tests, manual review, threat modelling and, for contracts that hold real value, an independent audit.
