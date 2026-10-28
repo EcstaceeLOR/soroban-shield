@@ -49,3 +49,14 @@ jobs:
       - run: npm run typecheck
       - run: npm run test -- --run
       - run: npm run build
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/audit@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: website
