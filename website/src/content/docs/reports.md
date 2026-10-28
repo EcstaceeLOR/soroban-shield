@@ -59,7 +59,7 @@ Severity (potential impact) and confidence (how sure the rule is that the patter
 
 `sorobanshield scan --format sarif` writes a SARIF 2.1.0 log for code-scanning tools. Severity maps to the SARIF `level`: `critical` and `high` become `error`, `medium` becomes `warning`, and `low` and `info` become `note`. The original severity and confidence are kept in each result's `properties`. Findings carry a file URI relative to the scan root (`uriBaseId` `%SRCROOT%`) and, when known, a line region; manifest findings have no region. `invocations[0].executionSuccessful` is `false`, with a notification per file, when files could not be analyzed.
 
-The output of this repository's fixtures was validated against the official OASIS SARIF 2.1.0 JSON schema during development. That validation is a manual step and is not part of CI. SARIF is only available for `scan`, not for `rules list` or `rules explain`.
+SARIF output for every fixture project in this repository is validated against the official OASIS SARIF 2.1.0 JSON schema by `scripts/check-sarif.sh`, which CI runs. Passing the schema does not mean a given code-scanning product renders every field. SARIF is only available for `scan`, not for `rules list` or `rules explain`.
 
 ## Baselines
 

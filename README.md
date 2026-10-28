@@ -18,7 +18,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Rule `SS-004` error-path review | Implemented (informational, low confidence) |
 | Rule `SS-005` state-transition test suggestions | Implemented (informational, low confidence, project-wide) |
 | Configuration file (`sorobanshield.toml`: exclude paths, disable rules, `fail_on`) | Implemented, strictly validated |
-| SARIF 2.1.0 output (`--format sarif`) | Implemented; sample outputs validated against the official schema (manual check) |
+| SARIF 2.1.0 output (`--format sarif`) | Implemented; fixture outputs validated against the official schema by `scripts/check-sarif.sh` (run in CI) |
 | Documentation website (`website/`) | Implemented: 18 routes, generated rule catalog, 71 tests including axe-core accessibility checks (no contrast checks). Layout reviewed by screenshot in headless Firefox (desktop and 390px mobile) on the landing, rules, rule detail and CLI reference pages only; no other browsers tried |
 | CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
 | Baselines (`--write-baseline`, `--baseline`) | Implemented; entries match rule + file + message, not line numbers |

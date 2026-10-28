@@ -1,0 +1,12 @@
+{
+  "name": "sorobanshield-validate-sarif",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Validates SorobanShield SARIF output against the official OASIS SARIF 2.1.0 JSON schema. Not part of the shipped tool.",
+  "type": "module",
+  "dependencies": {
+    "ajv": "8.17.1",
+    "ajv-draft-04": "1.0.0",
+    "ajv-formats": "3.0.1"
+  }
+}
