@@ -13,7 +13,7 @@
 Run these in any CI system that has a Rust toolchain. They are not a verified workflow.
 
 ```bash
-git clone https://github.com/sorobanshield/soroban-shield.git sorobanshield-src
+git clone https://github.com/Sorobanshield/soroban-shield.git sorobanshield-src
 cargo build --release --manifest-path sorobanshield-src/Cargo.toml
 ./sorobanshield-src/target/release/sorobanshield scan . --fail-on medium
 ```

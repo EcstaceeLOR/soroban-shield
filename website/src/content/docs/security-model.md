@@ -22,4 +22,4 @@ Source files and manifests are untrusted input. Malformed input produces an erro
 
 ## Reporting a vulnerability
 
-If you find a vulnerability in SorobanShield itself, do not open a public issue with exploit details. Follow the process in [SECURITY.md](https://github.com/sorobanshield/soroban-shield/blob/main/SECURITY.md) in the repository.
+If you find a vulnerability in SorobanShield itself, do not open a public issue with exploit details. Follow the process in [SECURITY.md](https://github.com/Sorobanshield/soroban-shield/blob/main/SECURITY.md) in the repository.

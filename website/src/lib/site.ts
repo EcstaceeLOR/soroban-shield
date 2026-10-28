@@ -1,4 +1,4 @@
-export const REPO_URL = 'https://github.com/sorobanshield/soroban-shield'
+export const REPO_URL = 'https://github.com/Sorobanshield/soroban-shield'
 
 export const ROUTE_PATTERNS = [
   '/',

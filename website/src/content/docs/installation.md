@@ -10,7 +10,7 @@ SorobanShield is **not yet published**. There is no crates.io package, no prebui
 ## Build from source
 
 ```bash
-git clone https://github.com/sorobanshield/soroban-shield.git
+git clone https://github.com/Sorobanshield/soroban-shield.git
 cd soroban-shield
 cargo build --release
 ```

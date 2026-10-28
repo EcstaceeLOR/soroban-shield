@@ -178,7 +178,7 @@ impl Report {
                 "tool": { "driver": {
                     "name": "SorobanShield",
                     "version": self.tool.version,
-                    "informationUri": "https://github.com/sorobanshield/soroban-shield",
+                    "informationUri": "https://github.com/Sorobanshield/soroban-shield",
                     "rules": rules,
                 }},
                 "results": results,

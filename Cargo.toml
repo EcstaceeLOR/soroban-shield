@@ -12,7 +12,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["SorobanShield Contributors"]
 license = "MIT"
-repository = "https://github.com/sorobanshield/soroban-shield"
+repository = "https://github.com/Sorobanshield/soroban-shield"
 
 [workspace.dependencies]
 clap = { version = "4", features = ["derive"] }

@@ -6,7 +6,7 @@ To gate a project on SorobanShield you need the binary in CI. Since no release e
 
 ```yaml
 - uses: dtolnay/rust-toolchain@stable
-- run: cargo install --git https://github.com/sorobanshield/soroban-shield sorobanshield --locked
+- run: cargo install --git https://github.com/Sorobanshield/soroban-shield sorobanshield --locked
 - run: sorobanshield scan . --fail-on medium
 ```
 

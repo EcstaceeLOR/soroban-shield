@@ -30,7 +30,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 Prerequisite: a stable Rust toolchain (developed on 1.99; older versions are untested).
 
 ```bash
-git clone https://github.com/sorobanshield/soroban-shield.git
+git clone https://github.com/Sorobanshield/soroban-shield.git
 cd soroban-shield
 cargo build --release
 ./target/release/sorobanshield --help

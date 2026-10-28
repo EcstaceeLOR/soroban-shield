@@ -3,7 +3,7 @@
 ## Reporting a vulnerability in SorobanShield
 
 Please report vulnerabilities privately through GitHub's private vulnerability reporting:
-<https://github.com/sorobanshield/soroban-shield/security/advisories/new>
+<https://github.com/Sorobanshield/soroban-shield/security/advisories/new>
 
 Do not open a public issue for a suspected vulnerability. Include the affected version or commit, a minimal reproduction, and the impact you expect. Maintainers will acknowledge reports on a best-effort basis; this is a volunteer project and no response-time guarantee is made.
 

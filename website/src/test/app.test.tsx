@@ -228,7 +228,7 @@ describe('responsive navigation', () => {
     expect(footer.getByRole('link', { name: 'Roadmap' })).toBeInTheDocument()
     expect(footer.getByRole('link', { name: 'Contributing' })).toBeInTheDocument()
     expect(footer.getByRole('link', { name: 'Security policy' })).toHaveAttribute('href', expect.stringContaining('SECURITY.md'))
-    expect(footer.getByRole('link', { name: 'Repository' })).toHaveAttribute('href', 'https://github.com/sorobanshield/soroban-shield')
+    expect(footer.getByRole('link', { name: 'Repository' })).toHaveAttribute('href', 'https://github.com/Sorobanshield/soroban-shield')
   })
 })
 
