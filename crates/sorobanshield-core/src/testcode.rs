@@ -19,6 +19,7 @@ pub fn is_cfg_test(attrs: &[Attribute]) -> bool {
 }
 
 /// Project-relative paths (`/`-separated) of files that are test-only: files
+/// in a `tests/` directory (Cargo integration tests), files
 /// with an inner `#![cfg(test)]`, files a parent declares with
 /// `#[cfg(test)] mod name;`, and everything those files declare in turn.
 ///
@@ -29,7 +30,7 @@ pub fn test_only_files(files: &[(String, &syn::File)]) -> HashSet<String> {
     let known: HashSet<&str> = files.iter().map(|(p, _)| p.as_str()).collect();
     let mut test_only: HashSet<String> = HashSet::new();
     for (path, ast) in files {
-        if is_cfg_test(&ast.attrs) {
+        if is_cfg_test(&ast.attrs) || in_tests_dir(path) {
             test_only.insert(path.clone());
         }
     }
@@ -53,6 +54,12 @@ pub fn test_only_files(files: &[(String, &syn::File)]) -> HashSet<String> {
             return test_only;
         }
     }
+}
+
+fn in_tests_dir(path: &str) -> bool {
+    let mut parts: Vec<&str> = path.split('/').collect();
+    parts.pop();
+    parts.contains(&"tests")
 }
 
 fn module_files(declaring: &str, name: &str) -> Vec<String> {
@@ -117,6 +124,17 @@ mod tests {
             ("src/t.rs", "#![cfg(test)]\nfn a() {}"),
         ]);
         assert_eq!(v, ["src/t.rs"]);
+    }
+
+    #[test]
+    fn files_in_a_tests_directory_are_test_only() {
+        let v = run(&[
+            ("src/lib.rs", ""),
+            ("tests/it.rs", ""),
+            ("crates/a/tests/nested/x.rs", ""),
+            ("src/tests.rs", ""),
+        ]);
+        assert_eq!(v, ["crates/a/tests/nested/x.rs", "tests/it.rs"]);
     }
 
     #[test]
