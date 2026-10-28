@@ -19,7 +19,7 @@ A security review toolkit for [Soroban](https://developers.stellar.org/docs/buil
 | Rule `SS-005` state-transition test suggestions | Implemented (informational, low confidence, project-wide) |
 | Configuration file (`sorobanshield.toml`: exclude paths, disable rules, `fail_on`) | Implemented, strictly validated |
 | SARIF 2.1.0 output (`--format sarif`) | Implemented; sample outputs validated against the official schema (manual check) |
-| Documentation website (`website/`) | Implemented: 18 routes, generated rule catalog, 51 tests; layout not visually reviewed |
+| Documentation website (`website/`) | Implemented: 18 routes, generated rule catalog, 71 tests including axe-core accessibility checks (no contrast checks). Layout reviewed by screenshot in headless Firefox (desktop and 390px mobile) on the landing, rules, rule detail and CLI reference pages only; no other browsers tried |
 | CI workflow | `.github/workflows/ci.yml`; first run on `main` passed |
 | Baselines (`--write-baseline`, `--baseline`) | Implemented; entries match rule + file + message, not line numbers |
 | Published release / binaries / crates.io | None |

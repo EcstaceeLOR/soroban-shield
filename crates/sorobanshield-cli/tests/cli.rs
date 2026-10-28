@@ -678,3 +678,47 @@ fn the_documented_sample_config_is_valid() {
         serde_json::json!(["vendor", "tests/generated"])
     );
 }
+
+#[test]
+fn relative_links_in_repository_markdown_resolve() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut files = vec![
+        root.join("README.md"),
+        root.join("CONTRIBUTING.md"),
+        root.join("SECURITY.md"),
+        root.join("CHANGELOG.md"),
+    ];
+    for e in std::fs::read_dir(root.join("docs")).unwrap() {
+        let p = e.unwrap().path();
+        if p.extension().is_some_and(|x| x == "md") {
+            files.push(p);
+        }
+    }
+    let mut broken = Vec::new();
+    let mut checked = 0;
+    for file in files {
+        let text = std::fs::read_to_string(&file).unwrap();
+        let mut rest = text.as_str();
+        while let Some(i) = rest.find("](") {
+            rest = &rest[i + 2..];
+            let Some(end) = rest.find(')') else { break };
+            let target = rest[..end].split('#').next().unwrap_or("");
+            rest = &rest[end..];
+            if target.is_empty() || target.contains("://") || target.starts_with("mailto:") {
+                continue;
+            }
+            checked += 1;
+            if !file.parent().unwrap().join(target).exists() {
+                broken.push(format!(
+                    "{} -> {target}",
+                    file.file_name().unwrap().to_string_lossy()
+                ));
+            }
+        }
+    }
+    assert!(
+        checked > 5,
+        "expected to check some links, checked {checked}"
+    );
+    assert!(broken.is_empty(), "broken relative links: {broken:?}");
+}

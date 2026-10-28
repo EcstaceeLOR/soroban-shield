@@ -1,6 +1,8 @@
 # CLI reference
 
 ```text
+Security review toolkit for Soroban smart contracts
+
 Usage: sorobanshield <COMMAND>
 
 Commands:
@@ -11,6 +13,9 @@ Commands:
 Options:
   -h, --help     Print help
   -V, --version  Print version
+
+Exit codes: 0 no findings at or above --fail-on; 1 findings at or above --fail-on; 2 invalid usage or configuration; 3 scan could not be completed.
+Static analysis cannot prove a contract is secure.
 ```
 
 ## `sorobanshield --version`

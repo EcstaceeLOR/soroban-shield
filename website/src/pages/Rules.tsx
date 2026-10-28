@@ -26,7 +26,7 @@ export default function Rules() {
     <div className="mx-auto max-w-5xl px-4 py-12">
       <h1 className="text-3xl font-bold text-white md:text-4xl">Security rules</h1>
       <p className="mt-3 text-lg text-slate-300">
-        The catalog is generated from the CLI. Only rules marked <strong>implemented</strong> run during a scan; planned rules are listed for transparency and make no detection claims.
+        The catalog is generated from the CLI. Only rules marked <strong>implemented</strong> run during a scan. Any rule that is still only planned would be labelled as such and never reported by a scan.
       </p>
 
       <form className="mt-8 flex flex-wrap items-end gap-4" onSubmit={(e) => e.preventDefault()} aria-label="Filter rules">
